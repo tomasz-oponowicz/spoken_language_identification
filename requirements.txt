@@ -1,6 +1,8 @@
 audioread==2.1.5
 cycler==0.10.0
+dask==0.17.1
 decorator==4.2.1
+h5py==2.7.1
 imageio==2.2.0
 joblib==0.11
 kiwisolver==1.0.1
