@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import time
 
 
+# source: https://github.com/pietz/language-recognition
 def audio_to_spectrogram(path, height=192, width=192):
     signal, sample_rate = lr.load(path, res_type='kaiser_fast')
 
