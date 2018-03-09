@@ -2,7 +2,7 @@ import dask.array as da
 
 
 def images_to_bundle(source, target, name):
-    da.image.imread(source + '*.jpg').to_hdf5(target, name)
+    da.image.imread(source).to_hdf5(target, name)
 
 
 if __name__ == "__main__":
