@@ -9,13 +9,16 @@ kiwisolver==1.0.1
 librosa==0.6.0
 llvmlite==0.22.0
 matplotlib==2.2.0
+networkx==2.1
 numba==0.37.0
 numpy==1.14.1
 Pillow==5.0.0
 pyparsing==2.2.0
 python-dateutil==2.6.1
 pytz==2018.3
+PyWavelets==0.5.2
 resampy==0.2.0
+scikit-image==0.13.1
 scikit-learn==0.19.1
 scipy==1.0.0
 six==1.11.0
