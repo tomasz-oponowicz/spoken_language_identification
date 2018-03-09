@@ -1,8 +1,8 @@
-import dask.array as da
+from dask.array.image import imread
 
 
 def images_to_bundle(source, target, name):
-    da.image.imread(source).to_hdf5(target, name)
+    imread(source).to_hdf5(target, name)
 
 
 if __name__ == "__main__":
