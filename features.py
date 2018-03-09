@@ -65,5 +65,5 @@ def process_audio(input_dir, debug=False):
 
 if __name__ == "__main__":
     process_audio('build/valid')
-    # process_audio('build/test')
-    # process_audio('build/train')
+    process_audio('build/test')
+    process_audio('build/train')
