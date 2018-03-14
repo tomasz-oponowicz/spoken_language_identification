@@ -47,6 +47,7 @@ if __name__ == "__main__":
 
     images_to_bundle('./build/test', 'test')
     images_to_bundle('./build/valid', 'valid')
+    images_to_bundle('./build/train', 'train')
 
     end = time.time()
     print("It took [s]: ", end - start)
