@@ -60,13 +60,13 @@ def load_data(label_binarizer, file, skip_augmentation=False):
     return (labels, features, metadata)
 
 
-def create_model():
+def create_model(skip_augmentation):
     label_binarizer = preprocessing.LabelBinarizer()
     label_binarizer.fit(['en', 'de', 'es'])
     print(label_binarizer.classes_)
 
     start = time.time()
-    train_labels, train_features, train_metadata = load_data(label_binarizer, 'train.npz', skip_augmentation=True)
+    train_labels, train_features, train_metadata = load_data(label_binarizer, 'train.npz', skip_augmentation=skip_augmentation)
     valid_labels, valid_features, valid_metadata = load_data(label_binarizer, 'valid.npz')
     test_labels, test_features, test_metadata = load_data(label_binarizer, 'test.npz')
     print("Loaded data in [s]: ", time.time() - start)
@@ -94,21 +94,29 @@ def create_model():
     model = Model(inputs=i, outputs=o)
     model.summary()
 
-    model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4), metrics=['accuracy'])
     model.fit(train_features, train_labels, epochs=3, verbose=1, validation_data=(valid_features, valid_labels))
 
     model.save('language.h5')
+
+    probabilities = model.predict(valid_features, batch_size=32, verbose=1)
+    expected = np.argmax(valid_labels, axis=1)
+    actual = np.argmax(probabilities, axis=1)
+
+    print("## Validation set\n")
+    print(classification_report(expected, actual, target_names=label_binarizer.classes_))
 
     probabilities = model.predict(test_features, batch_size=32, verbose=1)
     expected = np.argmax(test_labels, axis=1)
     actual = np.argmax(probabilities, axis=1)
 
+    print("## Test set\n")
     print(classification_report(expected, actual, target_names=label_binarizer.classes_))
 
 
 if __name__ == "__main__":
     start = time.time()
 
-    create_model()
+    create_model(skip_augmentation=False)
 
     print("Generated model in [s]: ", time.time() - start)
