@@ -1,9 +1,12 @@
 import time
-import numpy as np
 import re
+
+import numpy as np
+
 import matplotlib.pyplot as plt
 
 from sklearn import preprocessing
+from sklearn.metrics import classification_report
 
 from keras.models import Model, load_model
 from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
@@ -62,9 +65,12 @@ def create_model():
     label_binarizer.fit(['en', 'de', 'es'])
     print(label_binarizer.classes_)
 
+    start = time.time()
     train_labels, train_features, train_metadata = load_data(label_binarizer, 'train.npz', skip_augmentation=True)
     valid_labels, valid_features, valid_metadata = load_data(label_binarizer, 'valid.npz')
     test_labels, test_features, test_metadata = load_data(label_binarizer, 'test.npz')
+    print("Loaded data in [s]: ", time.time() - start)
+
 
     i = Input(shape=in_dim)
     m = Conv2D(1, (3, 3), activation='elu', padding='same')(i)
@@ -88,12 +94,16 @@ def create_model():
     model = Model(inputs=i, outputs=o)
     model.summary()
 
-    model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4), metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])
     model.fit(train_features, train_labels, epochs=3, verbose=1, validation_data=(valid_features, valid_labels))
 
     model.save('language.h5')
 
-    print(model.evaluate(test_features, test_labels))
+    probabilities = model.predict(test_features, batch_size=32, verbose=1)
+    expected = np.argmax(test_labels, axis=1)
+    actual = np.argmax(probabilities, axis=1)
+
+    print(classification_report(expected, actual, target_names=label_binarizer.classes_))
 
 
 if __name__ == "__main__":
@@ -101,5 +111,4 @@ if __name__ == "__main__":
 
     create_model()
 
-    end = time.time()
-    print("It took [s]: ", end - start)
+    print("Generated model in [s]: ", time.time() - start)
