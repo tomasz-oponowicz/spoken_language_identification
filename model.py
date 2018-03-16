@@ -91,6 +91,8 @@ def create_model():
     model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4), metrics=['accuracy'])
     model.fit(train_features, train_labels, epochs=3, verbose=1, validation_data=(valid_features, valid_labels))
 
+    model.save('language.h5')
+
     print(model.evaluate(test_features, test_labels))
 
 
