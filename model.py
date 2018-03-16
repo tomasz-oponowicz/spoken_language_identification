@@ -18,13 +18,13 @@ from keras.utils import np_utils
 in_dim = (192,192,1)
 out_dim = 3
 
-def load_data(label_binarizer, file, skip_augmentation=False):
+def load_data(label_binarizer, file, use_augmented_samples=True):
     bundle = np.load(file)
 
     metadata = bundle['labels']
     features = bundle['features']
 
-    if skip_augmentation:
+    if not use_augmented_samples:
 
         # filename without augmentation
         pattern = re.compile("^.+fragment\d+$")
@@ -60,13 +60,13 @@ def load_data(label_binarizer, file, skip_augmentation=False):
     return (labels, features, metadata)
 
 
-def create_model(skip_augmentation):
+def create_model(use_augmented_samples):
     label_binarizer = preprocessing.LabelBinarizer()
     label_binarizer.fit(['en', 'de', 'es'])
     print(label_binarizer.classes_)
 
     start = time.time()
-    train_labels, train_features, train_metadata = load_data(label_binarizer, 'train.npz', skip_augmentation=skip_augmentation)
+    train_labels, train_features, train_metadata = load_data(label_binarizer, 'train.npz', use_augmented_samples=use_augmented_samples)
     valid_labels, valid_features, valid_metadata = load_data(label_binarizer, 'valid.npz')
     test_labels, test_features, test_metadata = load_data(label_binarizer, 'test.npz')
     print("Loaded data in [s]: ", time.time() - start)
@@ -115,8 +115,14 @@ def create_model(skip_augmentation):
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Generate speech language recognition model.')
+    parser.add_argument('--use-augmented-samples', dest='use_augmented_samples', action='store_true')
+    parser.set_defaults(use_augmented_samples=False)
+
+    args = parser.parse_args()
+
     start = time.time()
-
-    create_model(skip_augmentation=False)
-
+    create_model(args.use_augmented_samples)
     print("Generated model in [s]: ", time.time() - start)
