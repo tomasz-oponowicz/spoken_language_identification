@@ -67,7 +67,7 @@ def create_model():
     test_labels, test_features, test_metadata = load_data(label_binarizer, 'test.npz')
 
     i = Input(shape=in_dim)
-    m = Conv2D(4, (3, 3), activation='elu', padding='same')(i)
+    m = Conv2D(1, (3, 3), activation='elu', padding='same')(i)
     m = MaxPooling2D()(m)
     # m = Conv2D(16, (3, 3), activation='elu', padding='same')(i)
     # m = MaxPooling2D()(m)
@@ -80,7 +80,7 @@ def create_model():
     # m = Conv2D(256, (3, 3), activation='elu', padding='same')(m)
     # m = MaxPooling2D()(m)
     m = Flatten()(m)
-    m = Dense(8, activation='elu')(m)
+    m = Dense(1, activation='elu')(m)
     # m = Dense(512, activation='elu')(m)
     # m = Dropout(0.5)(m)
     o = Dense(out_dim, activation='softmax')(m)
