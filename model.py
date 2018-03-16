@@ -1,6 +1,7 @@
 import time
 import numpy as np
 import re
+import matplotlib.pyplot as plt
 
 from sklearn import preprocessing
 
@@ -45,6 +46,10 @@ def load_data(label_binarizer, file, skip_augmentation=False):
         file=file, labels=labels.shape, features=features.shape, 
         max=np.max(features), min=np.min(features)
     ))
+
+    image = features[0, :, :, 0]
+    plt.imshow(image)
+    plt.savefig(file + '.png', bbox_inches='tight')
 
     assert len(metadata) == len(labels)
     assert len(metadata) == len(features)
