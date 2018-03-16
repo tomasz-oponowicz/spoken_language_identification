@@ -15,7 +15,7 @@ from keras.layers import Dropout, Input, BatchNormalization
 from keras.optimizers import Nadam
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import np_utils
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, TensorBoard
 
 import tensorflow as tf
 
@@ -27,6 +27,7 @@ LANGUAGE_INDEX = 0
 
 in_dim = (192,192,1)
 out_dim = len(LANGUAGES)
+batch_size = 16
 
 def load_data(file, label_binarizer, use_augmented_samples=True):
     bundle = np.load(file)
@@ -116,7 +117,7 @@ def validate(binary_labels, features, metadata, classes):
     assert male_count == female_count
 
 def test(labels, features, model, classes, title=""):
-    probabilities = model.predict(features, batch_size=32, verbose=0)
+    probabilities = model.predict(features, batch_size=batch_size, verbose=0)
 
     expected = flatten(labels)
     actual = flatten(probabilities)
@@ -142,22 +143,19 @@ def create_model(use_augmented_samples):
     print("Loaded data in [s]: ", time.time() - start)
 
     i = Input(shape=in_dim)
-    m = Conv2D(1, (3, 3), activation='elu', padding='same')(i)
+    m = Conv2D(16, (3, 3), activation='elu', padding='same')(i)
     m = MaxPooling2D()(m)
-    # m = Conv2D(16, (3, 3), activation='elu', padding='same')(i)
-    # m = MaxPooling2D()(m)
-    # m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
-    # m = MaxPooling2D()(m)
-    # m = Conv2D(64, (3, 3), activation='elu', padding='same')(m)
-    # m = MaxPooling2D()(m)
-    # m = Conv2D(128, (3, 3), activation='elu', padding='same')(m)
-    # m = MaxPooling2D()(m)
-    # m = Conv2D(256, (3, 3), activation='elu', padding='same')(m)
-    # m = MaxPooling2D()(m)
+    m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
+    m = MaxPooling2D()(m)
+    m = Conv2D(64, (3, 3), activation='elu', padding='same')(m)
+    m = MaxPooling2D()(m)
+    m = Conv2D(128, (3, 3), activation='elu', padding='same')(m)
+    m = MaxPooling2D()(m)
+    m = Conv2D(256, (3, 3), activation='elu', padding='same')(m)
+    m = MaxPooling2D()(m)
     m = Flatten()(m)
-    m = Dense(1, activation='elu')(m)
-    # m = Dense(512, activation='elu')(m)
-    # m = Dropout(0.5)(m)
+    m = Dense(512, activation='elu')(m)
+    m = Dropout(0.5)(m)
     o = Dense(out_dim, activation='softmax')(m)
 
     model = Model(inputs=i, outputs=o)
@@ -165,8 +163,17 @@ def create_model(use_augmented_samples):
 
     # https://stackoverflow.com/questions/43906048/keras-early-stopping
     earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=2, verbose=0, mode='auto')
+
+    # https://keras.io/callbacks/#tensorboard
+    # $ tensorboard --logdir=/home/myveo/projects/bert/logs
+    tensorboard = TensorBoard(
+        log_dir='logs', histogram_freq=10, batch_size=batch_size,
+        write_graph=True, write_grads=True, write_images=False,
+        embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None
+    )
+
     model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4), metrics=['accuracy'])
-    model.fit(train_features, train_labels, epochs=10, verbose=1, callbacks=[earlystop], validation_data=(valid_features, valid_labels))
+    model.fit(train_features, train_labels, epochs=10, verbose=1, batch_size=batch_size, callbacks=[tensorboard, earlystop], validation_data=(valid_features, valid_labels))
 
     model.save('language.h5')
 

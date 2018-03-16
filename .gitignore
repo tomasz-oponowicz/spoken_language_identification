@@ -6,3 +6,4 @@ __pycache__
 *.npz
 *.png
 *.h5
+logs
