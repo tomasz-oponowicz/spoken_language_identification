@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import re
 
 from sklearn import preprocessing
 
@@ -13,14 +14,30 @@ from keras.utils import np_utils
 in_dim = (192,192,1)
 out_dim = 3
 
-def load_data(label_binarizer, file):
+def load_data(label_binarizer, file, skip_augmentation=False):
     bundle = np.load(file)
 
     metadata = bundle['labels']
+    features = bundle['features']
+
+    if skip_augmentation:
+
+        # filename without augmentation
+        pattern = re.compile("^.+fragment\d+$")
+
+        mask = []
+        for info in metadata:
+            filename = info[2]
+            if pattern.match(filename):
+                mask.append(True)
+            else:
+                mask.append(False)
+
+        metadata = metadata[mask]
+        features = features[mask]
 
     labels = label_binarizer.transform(metadata[:, 0])
 
-    features = bundle['features']
     features = features.reshape((len(features), 192, 192, 1))
     features = np.divide(features, 255.)
 
@@ -28,6 +45,9 @@ def load_data(label_binarizer, file):
         file=file, labels=labels.shape, features=features.shape, 
         max=np.max(features), min=np.min(features)
     ))
+
+    assert len(metadata) == len(labels)
+    assert len(metadata) == len(features)
 
     return (labels, features, metadata)
 
@@ -37,7 +57,7 @@ def create_model():
     label_binarizer.fit(['en', 'de', 'es'])
     print(label_binarizer.classes_)
 
-    train_labels, train_features, train_metadata = load_data(label_binarizer, 'train.npz')
+    train_labels, train_features, train_metadata = load_data(label_binarizer, 'train.npz', skip_augmentation=True)
     valid_labels, valid_features, valid_metadata = load_data(label_binarizer, 'valid.npz')
     test_labels, test_features, test_metadata = load_data(label_binarizer, 'test.npz')
 

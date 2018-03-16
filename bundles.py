@@ -32,6 +32,8 @@ def images_to_bundle(input_dir, group):
         metadata = filename.split('_')
         language = metadata[0]
         gender = metadata[1]
+
+        # TODO store entrie filename instead of fragment
         info = metadata[2]
 
         image = imageio.imread(file)
@@ -39,6 +41,7 @@ def images_to_bundle(input_dir, group):
         labels.append([language, gender, info])
         features.append(image)
 
+    # TODO rename labels to metadata
     np.savez("{0}.npz".format(group), labels=np.array(labels), features=np.array(features))
 
 
