@@ -12,7 +12,6 @@ from keras.utils import np_utils
 
 in_dim = (192,192,1)
 out_dim = 3
-batch_size = 32
 
 def load_data(label_binarizer, file):
     bundle = np.load(file)
@@ -43,26 +42,29 @@ def create_model():
     test_labels, test_features, test_metadata = load_data(label_binarizer, 'test.npz')
 
     i = Input(shape=in_dim)
-    m = Conv2D(16, (3, 3), activation='elu', padding='same')(i)
+    m = Conv2D(4, (3, 3), activation='elu', padding='same')(i)
     m = MaxPooling2D()(m)
-    m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
-    m = MaxPooling2D()(m)
-    m = Conv2D(64, (3, 3), activation='elu', padding='same')(m)
-    m = MaxPooling2D()(m)
-    m = Conv2D(128, (3, 3), activation='elu', padding='same')(m)
-    m = MaxPooling2D()(m)
-    m = Conv2D(256, (3, 3), activation='elu', padding='same')(m)
-    m = MaxPooling2D()(m)
+    # m = Conv2D(16, (3, 3), activation='elu', padding='same')(i)
+    # m = MaxPooling2D()(m)
+    # m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
+    # m = MaxPooling2D()(m)
+    # m = Conv2D(64, (3, 3), activation='elu', padding='same')(m)
+    # m = MaxPooling2D()(m)
+    # m = Conv2D(128, (3, 3), activation='elu', padding='same')(m)
+    # m = MaxPooling2D()(m)
+    # m = Conv2D(256, (3, 3), activation='elu', padding='same')(m)
+    # m = MaxPooling2D()(m)
     m = Flatten()(m)
-    m = Dense(512, activation='elu')(m)
-    m = Dropout(0.5)(m)
+    m = Dense(8, activation='elu')(m)
+    # m = Dense(512, activation='elu')(m)
+    # m = Dropout(0.5)(m)
     o = Dense(out_dim, activation='softmax')(m)
 
     model = Model(inputs=i, outputs=o)
     model.summary()
 
     model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4), metrics=['accuracy'])
-    model.fit(train_features, train_labels, epochs=10, verbose=1, validation_data=(valid_features, valid_labels))
+    model.fit(train_features, train_labels, epochs=3, verbose=1, validation_data=(valid_features, valid_labels))
 
     print(model.evaluate(test_features, test_labels))
 
