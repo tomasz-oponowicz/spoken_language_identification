@@ -15,17 +15,18 @@ from keras.layers import Dropout, Input, BatchNormalization
 from keras.optimizers import Nadam
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import np_utils
+from keras.callbacks import EarlyStopping
 
 import tensorflow as tf
 
 # disable tensorflow debug logs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-in_dim = (192,192,1)
-out_dim = 3
-
 LANGUAGES = ['en', 'de', 'es']
 LANGUAGE_INDEX = 0
+
+in_dim = (192,192,1)
+out_dim = len(LANGUAGES)
 
 def load_data(file, label_binarizer, use_augmented_samples=True):
     bundle = np.load(file)
@@ -162,8 +163,10 @@ def create_model(use_augmented_samples):
     model = Model(inputs=i, outputs=o)
     model.summary()
 
+    # https://stackoverflow.com/questions/43906048/keras-early-stopping
+    earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=2, verbose=0, mode='auto')
     model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4), metrics=['accuracy'])
-    model.fit(train_features, train_labels, epochs=3, verbose=1, validation_data=(valid_features, valid_labels))
+    model.fit(train_features, train_labels, epochs=10, verbose=1, callbacks=[earlystop], validation_data=(valid_features, valid_labels))
 
     model.save('language.h5')
 
