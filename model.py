@@ -6,6 +6,8 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+import seaborn as sns
+
 from sklearn import preprocessing
 from sklearn.metrics import classification_report
 
@@ -65,6 +67,8 @@ def load_data(file, label_binarizer, use_augmented_samples=True):
     ))
 
     image = features[0, :, :, 0]
+
+    plt.figure() # reset plot
     plt.imshow(image)
     plt.savefig(file + '.png', bbox_inches='tight')
 
@@ -128,8 +132,14 @@ def test(labels, features, model, classes, title=""):
 
     print("\n## {title}\n".format(title=title))
 
+    max_probabilities = np.amax(probabilities, axis=1)
+
+    plt.figure() # reset plot
+    plot = sns.distplot(max_probabilities, bins=10)
+    plot.figure.savefig("{title}_proba_hist.png".format(title=title))
+
     print("Average confidence: {average}\n".format(
-        average=np.mean(np.amax(probabilities, axis=1))
+        average=np.mean(max_probabilities)
     ))
 
     print(classification_report(expected, actual, target_names=classes))
@@ -181,7 +191,7 @@ def create_model(use_augmented_samples):
 
     model.save('language.h5')
 
-    test(valid_labels, valid_features, model, classes, title="validation")
+    test(valid_labels, valid_features, model, classes, title="valid")
     test(test_labels, test_features, model, classes, title="test")
 
 
