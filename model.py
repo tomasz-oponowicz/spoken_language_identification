@@ -19,6 +19,10 @@ from keras.callbacks import EarlyStopping, TensorBoard
 
 import tensorflow as tf
 
+
+# for reproducibility
+np.random.seed(42)
+
 # disable tensorflow debug logs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
