@@ -2,9 +2,15 @@ import os
 import time
 import re
 
+# supress all warnings (especially matplotlib warnings)
+import warnings
+warnings.filterwarnings("ignore")
+
 import numpy as np
 
 import matplotlib.pyplot as plt
+
+import pandas as pd
 
 import seaborn as sns
 
@@ -21,12 +27,14 @@ from keras.callbacks import EarlyStopping, TensorBoard
 
 import tensorflow as tf
 
-
 # for reproducibility
 np.random.seed(42)
 
-# disable tensorflow debug logs
+# supress tensorflow debug logs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+GENDERS = ['m', 'f']
+GENDER_INDEX = 1
 
 LANGUAGES = ['en', 'de', 'es']
 LANGUAGE_INDEX = 0
@@ -124,7 +132,7 @@ def validate(binary_labels, features, metadata, classes):
     assert male_count > 0
     assert male_count == female_count
 
-def test(labels, features, model, classes, title=""):
+def test(labels, features, metadata, model, clazzes, title=""):
     probabilities = model.predict(features, batch_size=batch_size, verbose=0)
 
     expected = flatten(labels)
@@ -142,7 +150,17 @@ def test(labels, features, model, classes, title=""):
         average=np.mean(max_probabilities)
     ))
 
-    print(classification_report(expected, actual, target_names=classes))
+    errors = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int), index=clazzes, columns=GENDERS)
+    for index in range(len(actual)):
+        if actual[index] != expected[index]:
+            clazz = metadata[index][LANGUAGE_INDEX]
+            gender = metadata[index][GENDER_INDEX]
+            errors[gender][clazz] += 1
+
+    print("Amount of errors by gender:")
+    print(errors)
+
+    print(classification_report(expected, actual, target_names=clazzes))
 
 def create_model(use_augmented_samples):
     label_binarizer = preprocessing.LabelBinarizer()
@@ -191,8 +209,8 @@ def create_model(use_augmented_samples):
 
     model.save('language.h5')
 
-    test(valid_labels, valid_features, model, classes, title="valid")
-    test(test_labels, test_features, model, classes, title="test")
+    test(valid_labels, valid_features, valid_metadata, model, classes, title="valid")
+    test(test_labels, test_features, test_metadata, model, classes, title="test")
 
 
 if __name__ == "__main__":
