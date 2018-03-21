@@ -144,7 +144,7 @@ def test(labels, features, metadata, model, clazzes, title=""):
 
     plt.figure() # reset plot
     plot = sns.distplot(max_probabilities, bins=10)
-    plot.figure.savefig("{title}_proba_hist.png".format(title=title))
+    plot.figure.savefig("{title}_probabilities.png".format(title=title))
 
     print("Average confidence: {average}\n".format(
         average=np.mean(max_probabilities)
@@ -205,7 +205,17 @@ def create_model(use_augmented_samples):
     )
 
     model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4), metrics=['accuracy'])
-    model.fit(train_features, train_labels, epochs=10, verbose=1, batch_size=batch_size, callbacks=[tensorboard, earlystop], validation_data=(valid_features, valid_labels))
+    history = model.fit(train_features, train_labels, epochs=10, verbose=1, batch_size=batch_size, callbacks=[tensorboard, earlystop], validation_data=(valid_features, valid_labels))
+
+    plt.figure()
+    accuracy = pd.DataFrame(history.history)[['acc', 'val_acc']]
+    accuracy.plot(xticks=accuracy.index)
+    plt.savefig('history_accuracy.png')
+
+    plt.figure()
+    loss = pd.DataFrame(history.history)[['loss', 'val_loss']]
+    loss.plot(xticks=loss.index)
+    plt.savefig('history_loss.png')
 
     model.save('language.h5')
 
