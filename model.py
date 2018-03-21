@@ -43,17 +43,13 @@ in_dim = (192,192,1)
 out_dim = len(LANGUAGES)
 batch_size = 16
 
-def load_data(file, label_binarizer, use_augmented_samples=False):
+def load_data(file, label_binarizer, pattern=None):
     bundle = np.load(file)
 
     metadata = bundle['labels']
     features = bundle['features']
 
-    if not use_augmented_samples:
-
-        # filename without augmentation
-        pattern = re.compile("^.+fragment\d+$")
-
+    if pattern:
         mask = []
         for info in metadata:
             filename = info[2]
@@ -164,7 +160,7 @@ def test(labels, features, metadata, model, clazzes, title=""):
     print(classification_report(expected, actual, target_names=clazzes))
 
 def create_model(train_labels, train_features, valid_labels, valid_features, 
-                 enable_model_summary=True, enable_early_stop=True):
+                 epochs=10, enable_model_summary=True, enable_early_stop=True):
 
     i = Input(shape=in_dim)
     m = Conv2D(16, (3, 3), activation='elu', padding='same')(i)
@@ -209,7 +205,7 @@ def create_model(train_labels, train_features, valid_labels, valid_features,
     model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4), 
         metrics=['accuracy'])
 
-    history = model.fit(train_features, train_labels, epochs=10, 
+    history = model.fit(train_features, train_labels, epochs=epochs, 
         callbacks=callbacks, verbose=1, batch_size=batch_size, 
         validation_data=(valid_features, valid_labels))
 
@@ -217,16 +213,16 @@ def create_model(train_labels, train_features, valid_labels, valid_features,
 
 def plot_metrics_history(metrics, file):
     plt.figure()
-    accuracy = pd.DataFrame(history)[metrics]
-    accuracy.plot(xticks=accuracy.index)
+    data = pd.DataFrame(history)[metrics]
+    data.plot(xticks=data.index)
     plt.savefig(file)
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Generate speech language recognition model.')
-    parser.add_argument('--use-augmented-samples', dest='use_augmented_samples', action='store_true')
-    parser.set_defaults(use_augmented_samples=False)
+    # parser.add_argument('--use-augmented-samples', dest='use_augmented_samples', action='store_true')
+    # parser.set_defaults(use_augmented_samples=False)
 
     args = parser.parse_args()
 
@@ -236,13 +232,15 @@ if __name__ == "__main__":
     print("Classes:", clazzes)
 
     start = time.time()
-    train_labels, train_features, train_metadata = load_data('train.npz', label_binarizer)
+    train_labels, train_features, train_metadata = load_data('train.npz', label_binarizer, 
+        pattern=re.compile("^.+fragment\d+$"))
     valid_labels, valid_features, valid_metadata = load_data('valid.npz', label_binarizer)
     test_labels, test_features, test_metadata = load_data('test.npz', label_binarizer)
     print("Loaded data in [s]: ", time.time() - start)
 
     start = time.time()
-    model, history = create_model(train_labels, train_features, valid_labels, valid_features)
+    model, history = create_model(train_labels, train_features, valid_labels, 
+        valid_features, enable_model_summary=True, enable_early_stop=True)
     print("Generated model in [s]: ", time.time() - start)
 
     model.save('language.h5')
