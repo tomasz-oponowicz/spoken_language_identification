@@ -43,7 +43,7 @@ in_dim = (192,192,1)
 out_dim = len(LANGUAGES)
 batch_size = 16
 
-def load_data(file, label_binarizer, use_augmented_samples=True):
+def load_data(file, label_binarizer, use_augmented_samples=False):
     bundle = np.load(file)
 
     metadata = bundle['labels']
@@ -150,7 +150,8 @@ def test(labels, features, metadata, model, clazzes, title=""):
         average=np.mean(max_probabilities)
     ))
 
-    errors = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int), index=clazzes, columns=GENDERS)
+    errors = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int), 
+        index=clazzes, columns=GENDERS)
     for index in range(len(actual)):
         if actual[index] != expected[index]:
             clazz = metadata[index][LANGUAGE_INDEX]
@@ -162,17 +163,8 @@ def test(labels, features, metadata, model, clazzes, title=""):
 
     print(classification_report(expected, actual, target_names=clazzes))
 
-def create_model(use_augmented_samples):
-    label_binarizer = preprocessing.LabelBinarizer()
-    label_binarizer.fit(LANGUAGES)
-    classes = list(label_binarizer.classes_)
-    print("classes:", classes)
-
-    start = time.time()
-    train_labels, train_features, train_metadata = load_data('train.npz', label_binarizer, use_augmented_samples=use_augmented_samples)
-    valid_labels, valid_features, valid_metadata = load_data('valid.npz', label_binarizer)
-    test_labels, test_features, test_metadata = load_data('test.npz', label_binarizer)
-    print("Loaded data in [s]: ", time.time() - start)
+def create_model(train_labels, train_features, valid_labels, valid_features, 
+                 enable_model_summary=True, enable_early_stop=True):
 
     i = Input(shape=in_dim)
     m = Conv2D(16, (3, 3), activation='elu', padding='same')(i)
@@ -191,37 +183,43 @@ def create_model(use_augmented_samples):
     o = Dense(out_dim, activation='softmax')(m)
 
     model = Model(inputs=i, outputs=o)
-    model.summary()
+
+    if enable_model_summary:
+        model.summary()
 
     # https://stackoverflow.com/questions/43906048/keras-early-stopping
-    earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=2, verbose=0, mode='auto')
+    earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=2, 
+        verbose=0, mode='auto')
 
     # https://keras.io/callbacks/#tensorboard
     # $ tensorboard --logdir=/home/myveo/projects/bert/logs
-    tensorboard = TensorBoard(
-        log_dir='logs', histogram_freq=10, batch_size=batch_size,
-        write_graph=True, write_grads=True, write_images=False,
-        embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None
-    )
+    # tensorboard = TensorBoard(
+    #     log_dir='logs', histogram_freq=10, batch_size=batch_size,
+    #     write_graph=True, write_grads=True, write_images=False,
+    #     embeddings_freq=0, embeddings_layer_names=None, 
+    #     embeddings_metadata=None
+    # )
+    # ...then:
+    # callbacks[tensorboard]
 
-    model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4), metrics=['accuracy'])
-    history = model.fit(train_features, train_labels, epochs=10, verbose=1, batch_size=batch_size, callbacks=[tensorboard, earlystop], validation_data=(valid_features, valid_labels))
+    callbacks = []
+    if enable_early_stop:
+        callbacks = [earlystop]
 
+    model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4), 
+        metrics=['accuracy'])
+
+    history = model.fit(train_features, train_labels, epochs=10, 
+        callbacks=callbacks, verbose=1, batch_size=batch_size, 
+        validation_data=(valid_features, valid_labels))
+
+    return (model, history.history)
+
+def plot_metrics_history(metrics, file):
     plt.figure()
-    accuracy = pd.DataFrame(history.history)[['acc', 'val_acc']]
+    accuracy = pd.DataFrame(history)[metrics]
     accuracy.plot(xticks=accuracy.index)
-    plt.savefig('history_accuracy.png')
-
-    plt.figure()
-    loss = pd.DataFrame(history.history)[['loss', 'val_loss']]
-    loss.plot(xticks=loss.index)
-    plt.savefig('history_loss.png')
-
-    model.save('language.h5')
-
-    test(valid_labels, valid_features, valid_metadata, model, classes, title="valid")
-    test(test_labels, test_features, test_metadata, model, classes, title="test")
-
+    plt.savefig(file)
 
 if __name__ == "__main__":
     import argparse
@@ -232,6 +230,25 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    label_binarizer = preprocessing.LabelBinarizer()
+    label_binarizer.fit(LANGUAGES)
+    clazzes = list(label_binarizer.classes_)
+    print("Classes:", clazzes)
+
     start = time.time()
-    create_model(args.use_augmented_samples)
+    train_labels, train_features, train_metadata = load_data('train.npz', label_binarizer)
+    valid_labels, valid_features, valid_metadata = load_data('valid.npz', label_binarizer)
+    test_labels, test_features, test_metadata = load_data('test.npz', label_binarizer)
+    print("Loaded data in [s]: ", time.time() - start)
+
+    start = time.time()
+    model, history = create_model(train_labels, train_features, valid_labels, valid_features)
     print("Generated model in [s]: ", time.time() - start)
+
+    model.save('language.h5')
+
+    plot_metrics_history(['acc', 'val_acc'], file='history_accuracy.png')
+    plot_metrics_history(['loss', 'val_loss'], file='history_loss.png')
+
+    test(valid_labels, valid_features, valid_metadata, model, clazzes, title="valid")
+    test(test_labels, test_features, test_metadata, model, clazzes, title="test")
