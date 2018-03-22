@@ -41,7 +41,7 @@ LANGUAGE_INDEX = 0
 
 in_dim = (192,192,1)
 out_dim = len(LANGUAGES)
-batch_size = 16
+batch_size = 4
 
 def load_data(file, label_binarizer, pattern=None):
     bundle = np.load(file)
@@ -146,7 +146,7 @@ def test(labels, features, metadata, model, clazzes, title=""):
         average=np.mean(max_probabilities)
     ))
 
-    errors = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int), 
+    errors = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int),
         index=clazzes, columns=GENDERS)
     for index in range(len(actual)):
         if actual[index] != expected[index]:
@@ -159,8 +159,8 @@ def test(labels, features, metadata, model, clazzes, title=""):
 
     print(classification_report(expected, actual, target_names=clazzes))
 
-def create_model(train_labels, train_features, valid_labels, valid_features, 
-                 epochs=10, enable_model_summary=True, enable_early_stop=True):
+def train_model(train_labels, train_features, valid_labels, valid_features,
+                epochs=10, enable_model_summary=True, enable_early_stop=True):
 
     i = Input(shape=in_dim)
     m = Conv2D(16, (3, 3), activation='elu', padding='same')(i)
@@ -184,7 +184,7 @@ def create_model(train_labels, train_features, valid_labels, valid_features,
         model.summary()
 
     # https://stackoverflow.com/questions/43906048/keras-early-stopping
-    earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=2, 
+    earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=2,
         verbose=0, mode='auto')
 
     # https://keras.io/callbacks/#tensorboard
@@ -192,7 +192,7 @@ def create_model(train_labels, train_features, valid_labels, valid_features,
     # tensorboard = TensorBoard(
     #     log_dir='logs', histogram_freq=10, batch_size=batch_size,
     #     write_graph=True, write_grads=True, write_images=False,
-    #     embeddings_freq=0, embeddings_layer_names=None, 
+    #     embeddings_freq=0, embeddings_layer_names=None,
     #     embeddings_metadata=None
     # )
     # ...then:
@@ -202,27 +202,61 @@ def create_model(train_labels, train_features, valid_labels, valid_features,
     if enable_early_stop:
         callbacks = [earlystop]
 
-    model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4), 
+    model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4),
         metrics=['accuracy'])
 
-    history = model.fit(train_features, train_labels, epochs=epochs, 
-        callbacks=callbacks, verbose=1, batch_size=batch_size, 
+    history = model.fit(train_features, train_labels, epochs=epochs,
+        callbacks=callbacks, verbose=1, batch_size=batch_size,
         validation_data=(valid_features, valid_labels))
 
     return (model, history.history)
 
-def plot_metrics_history(metrics, file):
+def plot_metrics(history, metrics, file):
     plt.figure()
     data = pd.DataFrame(history)[metrics]
     data.plot(xticks=data.index)
     plt.savefig(file)
 
+def compare_deformation_accuracies(label_binarizer, valid_labels, valid_features):
+    epochs = 10
+
+    all_accuracies = None
+
+    patternsAndColumns = [
+        (re.compile("^.+fragment\d+$"), 'base'),
+        (re.compile("^.+pitch\d+$"), 'pitch'),
+        (re.compile("^.+speed\d+$"), 'speed'),
+        (re.compile("^.+noise\d+$"), 'noise'),
+        (None, 'all')
+    ];
+
+    for pattern, column in patternsAndColumns:
+        print("# {title}\n".format(title=column)) # separator
+
+        train_labels, train_features, train_metadata = load_data(
+            'train.npz', label_binarizer, pattern=pattern)
+        model, history = train_model(train_labels, train_features,
+            valid_labels, valid_features, epochs=epochs,
+            enable_model_summary=False, enable_early_stop=False)
+
+        current_accuracies = pd.DataFrame(history['val_acc'], columns=[column])
+        if all_accuracies is None:
+            all_accuracies = current_accuracies
+        else:
+            # merge columns
+            all_accuracies = pd.concat([all_accuracies, current_accuracies],
+                axis=1, join='inner')
+
+    plt.figure()
+    all_accuracies.plot(xticks=all_accuracies.index)
+    plt.savefig('deformation_acurracies.png')
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Generate speech language recognition model.')
-    # parser.add_argument('--use-augmented-samples', dest='use_augmented_samples', action='store_true')
-    # parser.set_defaults(use_augmented_samples=False)
+    parser.add_argument('--compare-deformations', dest='compare_deformations', action='store_true')
+    parser.set_defaults(compare_deformations=False)
 
     args = parser.parse_args()
 
@@ -232,21 +266,24 @@ if __name__ == "__main__":
     print("Classes:", clazzes)
 
     start = time.time()
-    train_labels, train_features, train_metadata = load_data('train.npz', label_binarizer, 
-        pattern=re.compile("^.+fragment\d+$"))
     valid_labels, valid_features, valid_metadata = load_data('valid.npz', label_binarizer)
-    test_labels, test_features, test_metadata = load_data('test.npz', label_binarizer)
-    print("Loaded data in [s]: ", time.time() - start)
 
-    start = time.time()
-    model, history = create_model(train_labels, train_features, valid_labels, 
-        valid_features, enable_model_summary=True, enable_early_stop=True)
-    print("Generated model in [s]: ", time.time() - start)
+    if args.compare_deformations:
+        compare_deformation_accuracies(label_binarizer, valid_labels, valid_features)
+    else:
+        test_labels, test_features, test_metadata = load_data('test.npz', label_binarizer)
+        train_labels, train_features, train_metadata = load_data('train.npz', label_binarizer, pattern=re.compile("^.+fragment\d+$"))
+        print("Loaded data in [s]: ", time.time() - start)
 
-    model.save('language.h5')
+        start = time.time()
+        model, history = train_model(train_labels, train_features,
+            valid_labels, valid_features)
+        print("Generated model in [s]: ", time.time() - start)
 
-    plot_metrics_history(['acc', 'val_acc'], file='history_accuracy.png')
-    plot_metrics_history(['loss', 'val_loss'], file='history_loss.png')
+        model.save('language.h5')
 
-    test(valid_labels, valid_features, valid_metadata, model, clazzes, title="valid")
-    test(test_labels, test_features, test_metadata, model, clazzes, title="test")
+        plot_metrics(history, ['acc', 'val_acc'], file='history_accuracy.png')
+        plot_metrics(history, ['loss', 'val_loss'], file='history_loss.png')
+
+        test(valid_labels, valid_features, valid_metadata, model, clazzes, title="valid")
+        test(test_labels, test_features, test_metadata, model, clazzes, title="test")
