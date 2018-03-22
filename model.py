@@ -41,7 +41,7 @@ LANGUAGE_INDEX = 0
 
 in_dim = (192,192,1)
 out_dim = len(LANGUAGES)
-batch_size = 4
+batch_size = 32
 
 def load_data(file, label_binarizer, pattern=None):
     bundle = np.load(file)
@@ -160,21 +160,22 @@ def test(labels, features, metadata, model, clazzes, title=""):
     print(classification_report(expected, actual, target_names=clazzes))
 
 def train_model(train_labels, train_features, valid_labels, valid_features,
-                epochs=10, enable_model_summary=True, enable_early_stop=True):
+                epochs=100, enable_model_summary=True, enable_early_stop=True):
 
     i = Input(shape=in_dim)
-    m = Conv2D(16, (3, 3), activation='elu', padding='same')(i)
+    m = Conv2D(8, (3, 3), activation='relu', padding='same')(i)
     m = MaxPooling2D()(m)
-    m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
+    m = Conv2D(16, (3, 3), activation='relu', padding='same')(m)
     m = MaxPooling2D()(m)
-    m = Conv2D(64, (3, 3), activation='elu', padding='same')(m)
+    m = Conv2D(64, (3, 3), activation='relu', padding='same')(m)
     m = MaxPooling2D()(m)
-    m = Conv2D(128, (3, 3), activation='elu', padding='same')(m)
+    m = Conv2D(128, (6, 6), activation='relu', padding='same')(m)
     m = MaxPooling2D()(m)
-    m = Conv2D(256, (3, 3), activation='elu', padding='same')(m)
+    m = Conv2D(128, (9, 9), activation='relu', padding='same')(m)
     m = MaxPooling2D()(m)
+    m = Dropout(0.85)(m)
     m = Flatten()(m)
-    m = Dense(512, activation='elu')(m)
+    m = Dense(256, activation='relu')(m)
     m = Dropout(0.5)(m)
     o = Dense(out_dim, activation='softmax')(m)
 
@@ -184,7 +185,7 @@ def train_model(train_labels, train_features, valid_labels, valid_features,
         model.summary()
 
     # https://stackoverflow.com/questions/43906048/keras-early-stopping
-    earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=2,
+    earlystop = EarlyStopping(monitor='val_acc', min_delta=0, patience=1,
         verbose=0, mode='auto')
 
     # https://keras.io/callbacks/#tensorboard
@@ -206,7 +207,7 @@ def train_model(train_labels, train_features, valid_labels, valid_features,
         metrics=['accuracy'])
 
     history = model.fit(train_features, train_labels, epochs=epochs,
-        callbacks=callbacks, verbose=1, batch_size=batch_size,
+        callbacks=callbacks, verbose=1,
         validation_data=(valid_features, valid_labels))
 
     return (model, history.history)
@@ -256,7 +257,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Generate speech language recognition model.')
     parser.add_argument('--compare-deformations', dest='compare_deformations', action='store_true')
-    parser.set_defaults(compare_deformations=False)
+    parser.add_argument('--use-entrie-data', dest='use_entrie_data', action='store_true')
+    parser.set_defaults(compare_deformations=False, use_entrie_data=False)
 
     args = parser.parse_args()
 
@@ -272,7 +274,11 @@ if __name__ == "__main__":
         compare_deformation_accuracies(label_binarizer, valid_labels, valid_features)
     else:
         test_labels, test_features, test_metadata = load_data('test.npz', label_binarizer)
-        train_labels, train_features, train_metadata = load_data('train.npz', label_binarizer, pattern=re.compile("^.+fragment\d+$"))
+
+        pattern = pattern=re.compile("^.+fragment\d+$") # without deformations
+        if args.use_entrie_data:
+            pattern = None
+        train_labels, train_features, train_metadata = load_data('train.npz', label_binarizer, pattern=pattern)
         print("Loaded data in [s]: ", time.time() - start)
 
         start = time.time()
