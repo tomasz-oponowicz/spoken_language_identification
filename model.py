@@ -162,7 +162,7 @@ def test(labels, features, metadata, model, clazzes, title=""):
     print(classification_report(expected, actual, target_names=clazzes))
 
 def train_model(train_labels, train_features, valid_labels, valid_features,
-                epochs=100, enable_model_summary=True, enable_early_stop=True):
+                epochs=5, enable_model_summary=True, enable_early_stop=False):
 
     i = Input(shape=in_dim)
     m = Conv2D(32, (3, 3), activation='elu', padding='same')(i)
@@ -172,7 +172,7 @@ def train_model(train_labels, train_features, valid_labels, valid_features,
     m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
     m = MaxPooling2D(pool_size=(2, 2))(m)
     m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
-    m = MaxPooling2D(pool_size=(2, 2))(m)
+    m = MaxPooling2D(pool_size=(2, 4))(m)
     # m = Conv2D(256, (3, 3), activation='elu', padding='same')(m)
     # m = MaxPooling2D(pool_size=(1, 4))(m)
 
