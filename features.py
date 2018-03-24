@@ -6,11 +6,12 @@ import librosa.display
 import matplotlib.pyplot as plt
 import time
 import numpy as np
+import soundfile as sf
 
 
 # source: https://github.com/pietz/language-recognition
 def audio_to_spectrogram(path, height=192, width=192):
-    signal, sample_rate = lr.load(path, res_type='kaiser_fast')
+    signal, sample_rate = sf.read(path)
 
     hop_length = signal.shape[0] // float(width)
     spectrogram = lr.feature.melspectrogram(signal, n_mels=height, hop_length=int(hop_length))
@@ -29,6 +30,11 @@ def normalize(spectrogram):
     normalized = (spectrogram - np.min(spectrogram)) / (np.max(spectrogram) - np.min(spectrogram))
     normalized = normalized * 255.
     normalized = normalized.astype(np.uint8)
+
+    assert normalized.shape == (192, 192)
+    assert np.max(normalized) <= 255
+    assert np.min(normalized) >= 0
+
     return normalized
 
 def process_audio(input_dir, debug=False):
@@ -52,9 +58,10 @@ def process_audio(input_dir, debug=False):
         imageio.imwrite(file_without_ext + '.png', normalized, compress_level=6)
 
         if debug:
-
             end = time.time()
             print("It took [s]: ", end - start)
+
+            imageio.imwrite('spectrogram_image.png', normalized, compress_level=6)
 
             # Make a new figure
             plt.figure()
@@ -73,7 +80,7 @@ def process_audio(input_dir, debug=False):
             # # Make the figure layout compact
             plt.tight_layout()
 
-            plt.savefig('spectrogram_matplotlib.png')
+            plt.savefig('spectrogram_chart.png')
 
             exit(0)
 
