@@ -5,6 +5,7 @@ import os
 import librosa.display
 import matplotlib.pyplot as plt
 import time
+import numpy as np
 
 
 # source: https://github.com/pietz/language-recognition
@@ -20,6 +21,15 @@ def audio_to_spectrogram(path, height=192, width=192):
 
     return log_spectrogram, sample_rate, hop_length
 
+def normalize(spectrogram):
+
+    # change values range to (0,255).
+    # imageio does the same silently when calling imageio.imwrite.
+    # however this is essential logic and let's don't rely on 3rd party behaviour.
+    normalized = (spectrogram - np.min(spectrogram)) / (np.max(spectrogram) - np.min(spectrogram))
+    normalized = normalized * 255.
+    normalized = normalized.astype(np.uint8)
+    return normalized
 
 def process_audio(input_dir, debug=False):
     files = []
@@ -36,34 +46,50 @@ def process_audio(input_dir, debug=False):
         spectrogram, sample_rate, hop_length = audio_to_spectrogram(file)
 
         file_without_ext = os.path.splitext(file)[0]
+        normalized = normalize(spectrogram)
 
         # use loseless image format, e.g. png
-        imageio.imwrite(file_without_ext + '.png', spectrogram, compress_level=6)
+        imageio.imwrite(file_without_ext + '.png', normalized, compress_level=6)
 
         if debug:
+
             end = time.time()
             print("It took [s]: ", end - start)
 
             # Make a new figure
-            plt.figure(figsize=(12, 4))
+            plt.figure()
 
-            # Display the spectrogram on a mel scale
-            # sample rate and hop length parameters are used to render the time axis
+            # # Display the spectrogram on a mel scale
+            # # sample rate and hop length parameters are used to render the time axis
             lr.display.specshow(spectrogram, sr=sample_rate, hop_length=int(hop_length),
                                 x_axis='time', y_axis='mel')
 
-            # Put a descriptive title on the plot
+            # # Put a descriptive title on the plot
             plt.title('mel power spectrogram')
 
-            # draw a color bar
+            # # draw a color bar
             plt.colorbar(format='%+02.0f dB')
 
-            # Make the figure layout compact
+            # # Make the figure layout compact
             plt.tight_layout()
-            plt.show()
+
+            plt.savefig('spectrogram_matplotlib.png')
+
+            exit(0)
 
 
 if __name__ == "__main__":
-    process_audio('build/valid')
-    process_audio('build/test')
-    process_audio('build/train')
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Generate spectrograms from audio samples.')
+    parser.add_argument('--debug', dest='debug', action='store_true')
+    parser.set_defaults(debug=False)
+
+    args = parser.parse_args()
+
+    if args.debug:
+        process_audio('build/train', debug=True)
+    else:
+        process_audio('build/valid')
+        process_audio('build/test')
+        process_audio('build/train')
