@@ -18,7 +18,7 @@ from sklearn import preprocessing
 from sklearn.metrics import classification_report
 
 from keras.models import Model, load_model, Sequential
-from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
+from keras.layers import Conv2D, MaxPooling2D, AveragePooling2D, Dense, Flatten
 from keras.layers import Dropout, Input, Activation
 from keras.optimizers import Nadam
 from keras.preprocessing.image import ImageDataGenerator
@@ -189,6 +189,10 @@ def train_model(train_labels, train_features, valid_labels, valid_features,
     model.add(Flatten())
 
     model.add(Dense(64))
+    model.add(BatchNormalization())
+    model.add(Activation('elu'))
+
+    model.add(Dense(32))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
 
