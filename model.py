@@ -17,14 +17,15 @@ import seaborn as sns
 from sklearn import preprocessing
 from sklearn.metrics import classification_report
 
-from keras.models import Model, load_model
+from keras.models import Model, load_model, Sequential
 from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
-from keras.layers import Dropout, Input, BatchNormalization
+from keras.layers import Dropout, Input, Activation
 from keras.optimizers import Nadam
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import np_utils
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 from keras.models import load_model
+from keras.layers.normalization import BatchNormalization
 
 import tensorflow as tf
 
@@ -167,21 +168,33 @@ def test(labels, features, metadata, clazzes, title=""):
 def train_model(train_labels, train_features, valid_labels, valid_features,
                 epochs=100, enable_model_summary=True, enable_early_stop=True):
 
-    i = Input(shape=in_dim)
-    m = Conv2D(32, (3, 3), activation='elu', padding='same')(i)
-    m = MaxPooling2D(pool_size=(4, 2))(m)
-    m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
-    m = MaxPooling2D(pool_size=(2, 2))(m)
-    m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
-    m = MaxPooling2D(pool_size=(2, 2))(m)
-    m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
-    m = MaxPooling2D(pool_size=(2, 4))(m)
-    m = Flatten()(m)
-    m = Dense(64, activation='elu')(m)
-    m = Dropout(0.5)(m)
-    o = Dense(out_dim, activation='softmax')(m)
+    model = Sequential()
 
-    model = Model(inputs=i, outputs=o)
+    model.add(Conv2D(32, (3, 3), padding='same', input_shape=in_dim))
+    model.add(Activation('elu'))
+    model.add(MaxPooling2D(pool_size=(4,2)))
+
+    model.add(Conv2D(32, (3, 3), padding='same'))
+    model.add(Activation('elu'))
+    model.add(MaxPooling2D(pool_size=(2,2)))
+
+    model.add(Conv2D(32, (3, 3), padding='same'))
+    model.add(Activation('elu'))
+    model.add(MaxPooling2D(pool_size=(2,2)))
+
+    model.add(Conv2D(32, (3, 3), padding='same'))
+    model.add(Activation('elu'))
+    model.add(MaxPooling2D(pool_size=(2,4)))
+
+    model.add(Flatten())
+
+    model.add(Dense(64))
+    model.add(Activation('elu'))
+
+    model.add(Dropout(0.5))
+
+    model.add(Dense(out_dim))
+    model.add(Activation('softmax'))
 
     if enable_model_summary:
         model.summary()
