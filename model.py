@@ -172,18 +172,22 @@ def train_model(train_labels, train_features, valid_labels, valid_features,
 
     model.add(Conv2D(32, (3, 3), padding='same', input_shape=in_dim))
     model.add(Activation('elu'))
+    model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(4,2)))
 
     model.add(Conv2D(32, (3, 3), padding='same'))
     model.add(Activation('elu'))
+    model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2,2)))
 
     model.add(Conv2D(32, (3, 3), padding='same'))
     model.add(Activation('elu'))
+    model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2,2)))
 
     model.add(Conv2D(32, (3, 3), padding='same'))
     model.add(Activation('elu'))
+    model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2,4)))
 
     model.add(Flatten())
