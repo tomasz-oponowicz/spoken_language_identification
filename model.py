@@ -23,7 +23,8 @@ from keras.layers import Dropout, Input, BatchNormalization
 from keras.optimizers import Nadam
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import np_utils
-from keras.callbacks import EarlyStopping, TensorBoard
+from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
+from keras.models import load_model
 
 import tensorflow as tf
 
@@ -130,7 +131,9 @@ def validate(binary_labels, features, metadata, classes):
     assert male_count > 0
     assert male_count == female_count
 
-def test(labels, features, metadata, model, clazzes, title=""):
+def test(labels, features, metadata, clazzes, title=""):
+    model = load_model('model.h5')
+
     probabilities = model.predict(features, verbose=0)
 
     expected = flatten(labels)
@@ -162,7 +165,7 @@ def test(labels, features, metadata, model, clazzes, title=""):
     print(classification_report(expected, actual, target_names=clazzes))
 
 def train_model(train_labels, train_features, valid_labels, valid_features,
-                epochs=5, enable_model_summary=True, enable_early_stop=False):
+                epochs=100, enable_model_summary=True, enable_early_stop=True):
 
     i = Input(shape=in_dim)
     m = Conv2D(32, (3, 3), activation='elu', padding='same')(i)
@@ -173,23 +176,8 @@ def train_model(train_labels, train_features, valid_labels, valid_features,
     m = MaxPooling2D(pool_size=(2, 2))(m)
     m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
     m = MaxPooling2D(pool_size=(2, 4))(m)
-    # m = Conv2D(256, (3, 3), activation='elu', padding='same')(m)
-    # m = MaxPooling2D(pool_size=(1, 4))(m)
-
-    # m = Conv2D(16, (3, 3), activation='elu', padding='same')(i)
-    # m = MaxPooling2D()(m)
-    # m = Conv2D(32, (3, 3), activation='elu', padding='same')(m)
-    # m = MaxPooling2D()(m)
-    # m = Conv2D(64, (3, 3), activation='elu', padding='same')(m)
-    # m = MaxPooling2D()(m)
-    # m = Conv2D(128, (3, 3), activation='elu', padding='same')(m)
-    # m = MaxPooling2D()(m)
-    # m = Conv2D(256, (3, 3), activation='elu', padding='same')(m)
-    # m = MaxPooling2D()(m)
     m = Flatten()(m)
     m = Dense(64, activation='elu')(m)
-    # m = Dense(32, activation='elu')(m)
-    # m = Dense(256, activation='elu')(m)
     m = Dropout(0.5)(m)
     o = Dense(out_dim, activation='softmax')(m)
 
@@ -197,6 +185,9 @@ def train_model(train_labels, train_features, valid_labels, valid_features,
 
     if enable_model_summary:
         model.summary()
+
+    checkpoint = ModelCheckpoint('model.h5', monitor='val_acc', verbose=0,
+        save_best_only=True, mode='max')
 
     # https://stackoverflow.com/questions/43906048/keras-early-stopping
     earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=2,
@@ -213,9 +204,9 @@ def train_model(train_labels, train_features, valid_labels, valid_features,
     # ...then:
     # callbacks[tensorboard]
 
-    callbacks = []
+    callbacks = [checkpoint]
     if enable_early_stop:
-        callbacks = [earlystop]
+        callbacks.append(earlystop)
 
     model.compile(loss='categorical_crossentropy', optimizer=Nadam(lr=1e-4),
         metrics=['accuracy'])
@@ -300,10 +291,11 @@ if __name__ == "__main__":
             valid_labels, valid_features)
         print("Generated model in [s]: ", time.time() - start)
 
-        model.save('language.h5')
+        # delete current model, load model checkpoint instead
+        del model
 
         plot_metrics(history, ['acc', 'val_acc'], file='history_accuracy.png')
         plot_metrics(history, ['loss', 'val_loss'], file='history_loss.png')
 
-        test(valid_labels, valid_features, valid_metadata, model, clazzes, title="valid")
-        test(test_labels, test_features, test_metadata, model, clazzes, title="test")
+        test(valid_labels, valid_features, valid_metadata, clazzes, title="valid")
+        test(test_labels, test_features, test_metadata, clazzes, title="test")
