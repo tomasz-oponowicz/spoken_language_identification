@@ -29,8 +29,10 @@ from keras.layers.normalization import BatchNormalization
 
 import tensorflow as tf
 
+SEED = 42
+
 # for reproducibility
-np.random.seed(42)
+np.random.seed(SEED)
 
 # supress tensorflow debug logs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -41,17 +43,22 @@ GENDER_INDEX = 1
 LANGUAGES = ['en', 'de', 'es']
 LANGUAGE_INDEX = 0
 
-TEST_BUNDLE_FILE = 'valid.npz'
-VALID_BUNDLE_FILE = 'test.npz'
+TEST_GROUP = 'valid'
+VALID_GROUP = 'test'
+TRAIN_GROUP = 'train'
+
+COLOR_DEPTH = 1
+WIDTH = 192
+HEIGHT = 192
 
 in_dim = (192,192,1)
 out_dim = len(LANGUAGES)
 
-def load_data(file, label_binarizer, pattern=None):
-    bundle = np.load(file)
+def load_data(group, label_binarizer, pattern=None, skip_input_validation=False):
+    metadata = np.load("{0}_metadata.npy".format(group))
 
-    metadata = bundle['labels']
-    features = bundle['features']
+    features = np.memmap("{0}_features.npy".format(group), dtype='float16', mode='r',
+        shape=(len(metadata), WIDTH, HEIGHT, COLOR_DEPTH))
 
     if pattern:
         mask = []
@@ -67,20 +74,21 @@ def load_data(file, label_binarizer, pattern=None):
 
     labels = label_binarizer.transform(metadata[:, 0])
 
-    features = features.reshape((len(features), 192, 192, 1))
-    features = np.divide(features, 255.)
-
-    print("[{file}] labels: {labels}, features: {features}".format(
-        file=file, labels=labels.shape, features=features.shape
+    print("[{group}] labels: {labels}, features: {features}".format(
+        group=group, labels=labels.shape, features=features.shape
     ))
 
     image = features[0, :, :, 0]
 
+    # plt.imgshow doesn't support float16
+    image = image.astype('float32')
+
     plt.figure() # reset plot
     plt.imshow(image)
-    plt.savefig(file + '.png', bbox_inches='tight')
+    plt.savefig(group + '.png', bbox_inches='tight')
 
-    validate(labels, features, metadata, label_binarizer.classes_)
+    if not skip_input_validation:
+        validate(labels, features, metadata, label_binarizer.classes_)
 
     return (labels, features, metadata)
 
@@ -243,7 +251,8 @@ def plot_metrics(history, metrics, file):
     data.plot(xticks=data.index)
     plt.savefig(file)
 
-def compare_deformation_accuracies(label_binarizer, valid_labels, valid_features):
+def compare_deformation_accuracies(label_binarizer, valid_labels, valid_features,
+        skip_input_validation=False):
     epochs = 10
 
     all_accuracies = None
@@ -260,7 +269,8 @@ def compare_deformation_accuracies(label_binarizer, valid_labels, valid_features
         print("# {title}\n".format(title=column)) # separator
 
         train_labels, train_features, train_metadata = load_data(
-            'train.npz', label_binarizer, pattern=pattern)
+            TRAIN_GROUP, label_binarizer, pattern=pattern,
+            skip_input_validation=skip_input_validation)
         model, history = train_model(train_labels, train_features,
             valid_labels, valid_features, epochs=epochs,
             enable_model_summary=False, enable_early_stop=False)
@@ -282,8 +292,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Generate speech language recognition model.')
     parser.add_argument('--compare-deformations', dest='compare_deformations', action='store_true')
+    parser.add_argument('--skip-input-validation', dest='skip_input_validation', action='store_true')
     parser.add_argument('--all', dest='all', action='store_true')
-    parser.set_defaults(compare_deformations=False, all=False)
+    parser.set_defaults(compare_deformations=False, skip_input_validation=False, all=False)
 
     args = parser.parse_args()
 
@@ -293,17 +304,21 @@ if __name__ == "__main__":
     print("Classes:", clazzes)
 
     start = time.time()
-    valid_labels, valid_features, valid_metadata = load_data(VALID_BUNDLE_FILE, label_binarizer)
+    valid_labels, valid_features, valid_metadata = load_data(VALID_GROUP, label_binarizer,
+        skip_input_validation=args.skip_input_validation)
 
     if args.compare_deformations:
-        compare_deformation_accuracies(label_binarizer, valid_labels, valid_features)
+        compare_deformation_accuracies(label_binarizer, valid_labels, valid_features,
+            skip_input_validation=args.skip_input_validation)
     else:
-        test_labels, test_features, test_metadata = load_data(TEST_BUNDLE_FILE, label_binarizer)
+        test_labels, test_features, test_metadata = load_data(TEST_GROUP, label_binarizer,
+            skip_input_validation=args.skip_input_validation)
 
         pattern = pattern=re.compile("^.+fragment\d+$") # without deformations
         if args.all:
             pattern = None
-        train_labels, train_features, train_metadata = load_data('train.npz', label_binarizer, pattern=pattern)
+        train_labels, train_features, train_metadata = load_data(TRAIN_GROUP, label_binarizer, pattern=pattern,
+            skip_input_validation=args.skip_input_validation)
         print("Loaded data in [s]: ", time.time() - start)
 
         start = time.time()
@@ -316,7 +331,7 @@ if __name__ == "__main__":
 
         # delete current model
         del model
-        # load model checkpoint instead
+        # load the best model checkpoint instead
         model = load_model('model.h5')
 
         test(valid_labels, valid_features, valid_metadata, model, clazzes, title="valid")

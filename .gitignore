@@ -4,6 +4,7 @@ build
 *.out
 __pycache__
 *.npz
+*.npy
 *.png
 *.h5
 logs
