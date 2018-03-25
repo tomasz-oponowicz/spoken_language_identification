@@ -29,7 +29,7 @@ from keras.layers.normalization import BatchNormalization
 
 import tensorflow as tf
 
-SEED = 42
+from constants import *
 
 # for reproducibility
 np.random.seed(SEED)
@@ -47,20 +47,16 @@ TEST_GROUP = 'valid'
 VALID_GROUP = 'test'
 TRAIN_GROUP = 'train'
 
-COLOR_DEPTH = 1
-WIDTH = 192
-HEIGHT = 192
-
 THRESHOLD = 0.8
 
-in_dim = (192,192,1)
+in_dim = (HEIGHT, WIDTH, COLOR_DEPTH)
 out_dim = len(LANGUAGES)
 
 def load_data(group, label_binarizer, pattern=None, skip_input_validation=False):
     metadata = np.load("{0}_metadata.npy".format(group))
 
-    features = np.memmap("{0}_features.npy".format(group), dtype='float16', mode='r',
-        shape=(len(metadata), WIDTH, HEIGHT, COLOR_DEPTH))
+    features = np.memmap("{0}_features.npy".format(group), dtype=DATA_TYPE, mode='r',
+        shape=(len(metadata), HEIGHT, WIDTH, COLOR_DEPTH))
 
     if pattern:
         mask = []
@@ -102,9 +98,9 @@ def validate(binary_labels, features, metadata, classes):
     assert binary_labels.shape[1] == len(LANGUAGES)
 
     assert len(features.shape) == 4
-    assert features.shape[1] == 192
-    assert features.shape[2] == 192
-    assert features.shape[3] == 1
+    assert features.shape[1] == HEIGHT
+    assert features.shape[2] == WIDTH
+    assert features.shape[3] == COLOR_DEPTH
 
     # langauge, gender, info
     assert len(metadata.shape) == 2
@@ -187,39 +183,38 @@ def test(labels, features, metadata, model, clazzes, title=""):
     print(classification_report(expected, actual, target_names=clazzes))
 
 def train_model(train_labels, train_features, valid_labels, valid_features,
-                epochs=100, enable_model_summary=True, enable_early_stop=True):
+                epochs=20, enable_model_summary=True, enable_early_stop=True):
 
     model = Sequential()
 
-    model.add(Conv2D(32, (3, 3), padding='same', input_shape=in_dim))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(4,2)))
-
-    model.add(Conv2D(32, (3, 3), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(2,2)))
-
-    model.add(Conv2D(32, (3, 3), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(2,2)))
-
-    model.add(Conv2D(32, (3, 3), padding='same'))
+    model.add(Conv2D(8, (3, 3), padding='same', input_shape=in_dim))
     model.add(Activation('elu'))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2,4)))
 
+    model.add(Conv2D(8, (3, 3), padding='same'))
+    model.add(Activation('elu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2,2)))
+
+    model.add(Conv2D(16, (3, 3), padding='same'))
+    model.add(Activation('elu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2,2)))
+
+    model.add(Conv2D(16, (3, 3), padding='same'))
+    model.add(Activation('elu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2,2)))
+
     model.add(Flatten())
 
-    model.add(Dense(64))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
+    # model.add(Dense(24))
+    # model.add(Activation('elu'))
+    # model.add(BatchNormalization())
 
-    model.add(Dense(32))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
+    # model.add(Dense(24))
+    # model.add(Activation('elu'))
 
     model.add(Dropout(0.5))
 
