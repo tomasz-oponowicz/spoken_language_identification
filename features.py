@@ -11,6 +11,8 @@ import soundfile as sf
 
 # source: https://github.com/pietz/language-recognition
 def audio_to_spectrogram(path, height=192, width=192):
+
+    # loading samples with soundfile is much faster than librosa
     signal, sample_rate = sf.read(path)
 
     hop_length = signal.shape[0] // float(width)
