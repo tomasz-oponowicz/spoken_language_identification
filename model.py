@@ -132,9 +132,7 @@ def validate(binary_labels, features, metadata, classes):
     assert male_count > 0
     assert male_count == female_count
 
-def test(labels, features, metadata, clazzes, title=""):
-    model = load_model('model.h5')
-
+def test(labels, features, metadata, model, clazzes, title=""):
     probabilities = model.predict(features, verbose=0)
 
     expected = flatten(labels)
@@ -313,11 +311,13 @@ if __name__ == "__main__":
             valid_labels, valid_features)
         print("Generated model in [s]: ", time.time() - start)
 
-        # delete current model, load model checkpoint instead
-        del model
-
         plot_metrics(history, ['acc', 'val_acc'], file='history_accuracy.png')
         plot_metrics(history, ['loss', 'val_loss'], file='history_loss.png')
 
-        test(valid_labels, valid_features, valid_metadata, clazzes, title="valid")
-        test(test_labels, test_features, test_metadata, clazzes, title="test")
+        # delete current model
+        del model
+        # load model checkpoint instead
+        model = load_model('model.h5')
+
+        test(valid_labels, valid_features, valid_metadata, model, clazzes, title="valid")
+        test(test_labels, test_features, test_metadata, model, clazzes, title="test")
