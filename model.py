@@ -309,7 +309,8 @@ if __name__ == "__main__":
     parser.add_argument('--compare-deformations', dest='compare_deformations', action='store_true')
     parser.add_argument('--skip-input-validation', dest='skip_input_validation', action='store_true')
     parser.add_argument('--all', dest='all', action='store_true')
-    parser.set_defaults(compare_deformations=False, skip_input_validation=False, all=False)
+    parser.add_argument('--test', dest='test', action='store_true')
+    parser.set_defaults(compare_deformations=False, skip_input_validation=False, all=False, test=False)
 
     args = parser.parse_args()
 
@@ -325,11 +326,21 @@ if __name__ == "__main__":
     if args.compare_deformations:
         compare_deformation_accuracies(label_binarizer, valid_labels, valid_features,
             skip_input_validation=args.skip_input_validation)
+    elif args.test:
+        test_labels, test_features, test_metadata = load_data(TEST_GROUP, label_binarizer,
+            skip_input_validation=args.skip_input_validation)
+        print("Loaded data in [s]: ", time.time() - start)
+
+        model = load_model('model.h5')
+
+        test(valid_labels, valid_features, valid_metadata, model, clazzes, title="valid")
+        test(test_labels, test_features, test_metadata, model, clazzes, title="test")
     else:
         test_labels, test_features, test_metadata = load_data(TEST_GROUP, label_binarizer,
             skip_input_validation=args.skip_input_validation)
 
-        pattern = pattern=re.compile("^.+fragment\d+$") # without deformations
+        # without deformations
+        pattern = pattern=re.compile("^.+fragment\d+$")
         if args.all:
             pattern = None
         train_labels, train_features, train_metadata = load_data(TRAIN_GROUP, label_binarizer,
