@@ -193,12 +193,12 @@ def train_model(train_labels, train_features, valid_labels, valid_features,
     model.add(Flatten())
 
     model.add(Dense(64))
-    model.add(BatchNormalization())
     model.add(Activation('elu'))
+    model.add(BatchNormalization())
 
     model.add(Dense(32))
-    model.add(BatchNormalization())
     model.add(Activation('elu'))
+    model.add(BatchNormalization())
 
     model.add(Dropout(0.5))
 
