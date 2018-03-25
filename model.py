@@ -51,6 +51,8 @@ COLOR_DEPTH = 1
 WIDTH = 192
 HEIGHT = 192
 
+THRESHOLD = 0.8
+
 in_dim = (192,192,1)
 out_dim = len(LANGUAGES)
 
@@ -160,14 +162,27 @@ def test(labels, features, metadata, model, clazzes, title=""):
 
     errors = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int),
         index=clazzes, columns=GENDERS)
+    threshold_errors = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int),
+        index=clazzes, columns=GENDERS)
+    threshold_scores = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int),
+        index=clazzes, columns=GENDERS)
     for index in range(len(actual)):
+        clazz = metadata[index][LANGUAGE_INDEX]
+        gender = metadata[index][GENDER_INDEX]
         if actual[index] != expected[index]:
-            clazz = metadata[index][LANGUAGE_INDEX]
-            gender = metadata[index][GENDER_INDEX]
             errors[gender][clazz] += 1
+        if actual[index] >= THRESHOLD:
+            if actual[index] != expected[index]:
+                threshold_errors[gender][clazz] += 1
+            if actual[index] == expected[index]:
+                threshold_scores[gender][clazz] += 1
 
     print("Amount of errors by gender:")
-    print(errors)
+    print(errors, "\n")
+    print("Amount of errors by gender (threshold {0}):".format(THRESHOLD))
+    print(threshold_errors, "\n")
+    print("Amount of scores by gender (threshold {0}):".format(THRESHOLD))
+    print(threshold_scores, "\n")
 
     print(classification_report(expected, actual, target_names=clazzes))
 
@@ -317,8 +332,8 @@ if __name__ == "__main__":
         pattern = pattern=re.compile("^.+fragment\d+$") # without deformations
         if args.all:
             pattern = None
-        train_labels, train_features, train_metadata = load_data(TRAIN_GROUP, label_binarizer, pattern=pattern,
-            skip_input_validation=args.skip_input_validation)
+        train_labels, train_features, train_metadata = load_data(TRAIN_GROUP, label_binarizer,
+            pattern=pattern, skip_input_validation=args.skip_input_validation)
         print("Loaded data in [s]: ", time.time() - start)
 
         start = time.time()
