@@ -8,34 +8,46 @@ import time
 import numpy as np
 import soundfile as sf
 
+from constants import *
 
-# source: https://github.com/pietz/language-recognition
-def audio_to_spectrogram(path, height=192, width=192):
+def audio_to_spectrogram(file):
 
     # loading samples with soundfile is much faster than librosa
-    signal, sample_rate = sf.read(path)
+    signal, sample_rate = sf.read(file)
 
-    hop_length = signal.shape[0] // float(width)
-    spectrogram = lr.feature.melspectrogram(signal, n_mels=height, hop_length=int(hop_length))
+    assert sample_rate == 22050
+
+    # defaults
+    n_mels = 128
+    n_fft = 2048
+    hop_length = int(n_fft / 4)
+
+    spectrogram = lr.feature.melspectrogram(signal, sr=sample_rate,
+        n_mels=n_mels, n_fft=n_fft, hop_length=hop_length)
+
     log_spectrogram = lr.amplitude_to_db(spectrogram)
 
     # trim
-    log_spectrogram = log_spectrogram[:, 0:width]
+    log_spectrogram = log_spectrogram[:, 0:WIDTH]
+
+    assert log_spectrogram.shape[0] == HEIGHT
+    assert log_spectrogram.shape[1] >= WIDTH
 
     return log_spectrogram, sample_rate, hop_length
 
 def normalize(spectrogram):
 
-    # change values range to (0,255).
-    # imageio does the same silently when calling imageio.imwrite.
-    # however this is essential logic and let's don't rely on 3rd party behaviour.
+    # scale values between (0,1)
     normalized = (spectrogram - np.min(spectrogram)) / (np.max(spectrogram) - np.min(spectrogram))
-    normalized = normalized * 255.
-    normalized = normalized.astype(np.uint8)
+    normalized = normalized.astype(DATA_TYPE)
+    normalized = normalized.reshape(HEIGHT, WIDTH, COLOR_DEPTH)
 
-    assert normalized.shape == (192, 192)
-    assert np.max(normalized) <= 255
-    assert np.min(normalized) >= 0
+    assert normalized.shape == (HEIGHT, WIDTH, COLOR_DEPTH)
+    assert normalized.dtype == DATA_TYPE
+
+    # ignore precision issues
+    assert abs(1.0 - np.max(normalized)) < 0.01
+    assert abs(0.0 - np.min(normalized)) < 0.01
 
     return normalized
 
@@ -56,32 +68,23 @@ def process_audio(input_dir, debug=False):
         file_without_ext = os.path.splitext(file)[0]
         normalized = normalize(spectrogram)
 
-        # use loseless image format, e.g. png
-        imageio.imwrite(file_without_ext + '.png', normalized, compress_level=6)
+        # .npz extension is added automatically
+        np.savez_compressed(file_without_ext, data=normalized)
 
         if debug:
             end = time.time()
             print("It took [s]: ", end - start)
 
-            imageio.imwrite('spectrogram_image.png', normalized, compress_level=6)
+            # data is casted to uint8, i.e. (0, 255)
+            imageio.imwrite('spectrogram_image.png', spectrogram)
 
-            # Make a new figure
+            # sample rate and hop length parameters
+            # are used to render the time axis
             plt.figure()
-
-            # # Display the spectrogram on a mel scale
-            # # sample rate and hop length parameters are used to render the time axis
-            lr.display.specshow(spectrogram, sr=sample_rate, hop_length=int(hop_length),
+            lr.display.specshow(spectrogram, sr=sample_rate, hop_length=hop_length,
                                 x_axis='time', y_axis='mel')
-
-            # # Put a descriptive title on the plot
             plt.title('mel power spectrogram')
-
-            # # draw a color bar
             plt.colorbar(format='%+02.0f dB')
-
-            # # Make the figure layout compact
-            plt.tight_layout()
-
             plt.savefig('spectrogram_chart.png')
 
             exit(0)

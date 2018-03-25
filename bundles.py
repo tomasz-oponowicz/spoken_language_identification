@@ -7,11 +7,7 @@ import matplotlib.pyplot as plt
 import time
 import numpy as np
 
-SEED = 42
-
-COLOR_DEPTH = 1
-WIDTH = 192
-HEIGHT = 192
+from constants import *
 
 def remove_extension(file):
     return os.path.splitext(file)[0]
@@ -22,7 +18,7 @@ def get_filename(file):
 
 
 def images_to_bundle(input_dir, group):
-    files = glob.glob(os.path.join(input_dir, '*.png'))
+    files = glob.glob(os.path.join(input_dir, '*.npz'))
 
     # shuffle files
     files = sorted(files)
@@ -30,8 +26,8 @@ def images_to_bundle(input_dir, group):
 
     metadata = []
 
-    features = np.memmap("{0}_features.npy".format(group), dtype='float16', mode='w+',
-        shape=(len(files), WIDTH, HEIGHT, COLOR_DEPTH))
+    features = np.memmap("{0}_features.npy".format(group), dtype=DATA_TYPE, mode='w+',
+        shape=(len(files), HEIGHT, WIDTH, COLOR_DEPTH))
 
     for index, file in enumerate(files):
         print(file)
@@ -40,17 +36,18 @@ def images_to_bundle(input_dir, group):
         language = filename.split('_')[0]
         gender = filename.split('_')[1]
 
-        image = imageio.imread(file)
-        image = image.reshape(WIDTH, HEIGHT, COLOR_DEPTH)
-        image = np.divide(image, 255.)
+        spectogram = np.load(file)[DATA_KEY]
+
+        assert spectogram.shape == (HEIGHT, WIDTH, COLOR_DEPTH)
+        assert spectogram.dtype == DATA_TYPE
 
         metadata.append([language, gender, filename])
 
-        features[index] = image
+        features[index] = spectogram
 
     np.save("{0}_metadata.npy".format(group), metadata)
 
-    # flush changes to disk
+    # flush changes to a disk
     features.flush()
     del features
 
