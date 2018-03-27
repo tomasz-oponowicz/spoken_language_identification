@@ -1,0 +1,8 @@
+SEED = 42
+
+COLOR_DEPTH = 1
+WIDTH = 384
+HEIGHT = 128
+
+DATA_TYPE = 'float16'
+DATA_KEY = 'data'
