@@ -7,7 +7,7 @@ from sklearn import preprocessing
 from constants import *
 
 
-def load_data(label_binarizer, input_dir, group, fold_indexes, shape):
+def load_data(label_binarizer, input_dir, group, fold_indexes, input_shape):
     all_metadata = []
     all_features = []
 
@@ -17,7 +17,7 @@ def load_data(label_binarizer, input_dir, group, fold_indexes, shape):
 
         filename = "{group}_data.fold{index}.npy".format(group=group, index=fold_index)
         features = np.memmap(os.path.join(input_dir, filename),
-            dtype=DATA_TYPE, mode='r', shape=(len(metadata),) + shape)
+            dtype=DATA_TYPE, mode='r', shape=(len(metadata),) + input_shape)
 
         all_metadata.append(metadata)
         all_features.append(features)
@@ -40,7 +40,7 @@ def build_label_binarizer():
 
     return label_binarizer, clazzes
 
-def train_generator(fold_count, input_dir, shape):
+def train_generator(fold_count, input_dir, input_shape):
     label_binarizer, clazzes = build_label_binarizer()
 
     fold_indexes = list(range(1, fold_count + 1))
@@ -49,11 +49,11 @@ def train_generator(fold_count, input_dir, shape):
         train_fold_indexes = fold_indexes.copy()
         train_fold_indexes.remove(fold_index)
         train_labels, train_features, train_metadata = load_data(label_binarizer,
-            input_dir, 'train', train_fold_indexes, shape)
+            input_dir, 'train', train_fold_indexes, input_shape)
 
         test_fold_indexes = [fold_index]
         test_labels, test_features, test_metadata = load_data(label_binarizer,
-            input_dir, 'train', test_fold_indexes, shape)
+            input_dir, 'train', test_fold_indexes, input_shape)
 
         yield train_labels, train_features, test_labels, test_features
 
@@ -66,6 +66,6 @@ def train_generator(fold_count, input_dir, shape):
         del test_metadata
 
 if __name__ == "__main__":
-    generator = train_generator(14, 'fb', (FB_HEIGHT, WIDTH, COLOR_DEPTH))
+    generator = train_generator(3, 'fb', (FB_HEIGHT, WIDTH, COLOR_DEPTH))
     for train_labels, train_features, test_labels, test_features in generator:
         print(train_labels.shape)
