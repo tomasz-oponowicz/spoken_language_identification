@@ -8,8 +8,8 @@ from constants import *
 
 
 def load_data(label_binarizer, input_dir, group, fold_indexes, shape):
-    all_metadata = None
-    all_features = None
+    all_metadata = []
+    all_features = []
 
     for fold_index in fold_indexes:
         filename = "{group}_metadata.fold{index}.npy".format(group=group, index=fold_index)
@@ -19,16 +19,11 @@ def load_data(label_binarizer, input_dir, group, fold_indexes, shape):
         features = np.memmap(os.path.join(input_dir, filename),
             dtype=DATA_TYPE, mode='r', shape=(len(metadata),) + shape)
 
-        if all_metadata is None and all_features is None:
-            all_metadata = metadata
-            all_features = features
-        else:
-            all_metadata = np.concatenate((all_metadata, metadata))
-            all_features = np.concatenate((all_features, features))
+        all_metadata.append(metadata)
+        all_features.append(features)
 
-        del metadata
-        del features
-
+    all_metadata = np.concatenate(all_metadata)
+    all_features = np.concatenate(all_features)
     all_labels = label_binarizer.transform(all_metadata[:, 0])
 
     print("[{group}] labels: {labels}, features: {features}".format(
