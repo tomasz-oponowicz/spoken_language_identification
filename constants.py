@@ -7,3 +7,6 @@ COLOR_DEPTH = 1
 
 DATA_TYPE = 'float16'
 DATA_KEY = 'data'
+
+LANGUAGES = ['en', 'de', 'es']
+GENDERS = ['m', 'f']
