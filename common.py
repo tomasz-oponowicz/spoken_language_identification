@@ -18,6 +18,9 @@ from sklearn.metrics import classification_report
 
 from constants import *
 
+# for reproducibility
+np.random.seed(SEED)
+
 def flatten(binary_labels):
     return np.argmax(binary_labels, axis=1)
 
