@@ -1,55 +1,131 @@
-import librosa as lr
 import glob
-import imageio
 import os
-import librosa.display
-import matplotlib.pyplot as plt
 import time
+
+import imageio
 import numpy as np
 import soundfile as sf
+from scipy.fftpack import dct
 
 from constants import *
 
-def audio_to_spectrogram(file):
-
-    # loading samples with soundfile is much faster than librosa
-    signal, sample_rate = sf.read(file)
-
-    assert sample_rate == 22050
-
-    # defaults
-    n_mels = 128
-    n_fft = 2048
-    hop_length = int(n_fft / 4)
-
-    spectrogram = lr.feature.melspectrogram(signal, sr=sample_rate,
-        n_mels=n_mels, n_fft=n_fft, hop_length=hop_length)
-
-    log_spectrogram = lr.amplitude_to_db(spectrogram)
-
-    # trim
-    log_spectrogram = log_spectrogram[:, 0:WIDTH]
-
-    assert log_spectrogram.shape[0] == HEIGHT
-    assert log_spectrogram.shape[1] >= WIDTH
-
-    return log_spectrogram, sample_rate, hop_length
-
 def normalize(spectrogram):
 
-    # scale values between (0,1)
+    # Mean Normalization
+    spectrogram -= (np.mean(spectrogram, axis=0) + 1e-8)
+
+    # MinMax Scaler, scale values between (0,1)
     normalized = (spectrogram - np.min(spectrogram)) / (np.max(spectrogram) - np.min(spectrogram))
+
+    # Reduce precision, float16
     normalized = normalized.astype(DATA_TYPE)
-    normalized = normalized.reshape(HEIGHT, WIDTH, COLOR_DEPTH)
 
-    assert normalized.shape == (HEIGHT, WIDTH, COLOR_DEPTH)
+    # Rotate 90deg
+    normalized = np.swapaxes(normalized, 0, 1)
+
+    # Reshape, tensor 3d
+    (height, width) = normalized.shape
+    normalized = normalized.reshape(height, width, COLOR_DEPTH)
+
     assert normalized.dtype == DATA_TYPE
-
-    # ignore precision issues
-    assert abs(1.0 - np.max(normalized)) < 0.01
-    assert abs(0.0 - np.min(normalized)) < 0.01
+    assert np.max(normalized) == 1.0
+    assert np.min(normalized) == 0.0
 
     return normalized
+
+# source1: http://haythamfayek.com/2016/04/21/speech-processing-for-machine-learning.html
+# source2: https://www.kaggle.com/ybonde/log-spectrogram-and-mfcc-filter-bank-example
+def generate_fb_and_mfcc(signal, sample_rate):
+
+    # Pre-Emphasis
+    pre_emphasis = 0.97
+    emphasized_signal = np.append(signal[0], signal[1:] - pre_emphasis * signal[:-1])
+
+    # Framing
+    frame_size = 0.025
+    frame_stride = 0.01
+
+    ### Convert from seconds to samples
+    frame_length, frame_step = frame_size * sample_rate, frame_stride * sample_rate
+    signal_length = len(emphasized_signal)
+    frame_length = int(round(frame_length))
+    frame_step = int(round(frame_step))
+
+    ### Make sure that we have at least 1 frame
+    num_frames = int(np.ceil(float(np.abs(signal_length - frame_length)) / frame_step))
+
+    pad_signal_length = num_frames * frame_step + frame_length
+    z = np.zeros((pad_signal_length - signal_length))
+
+    ### Pad Signal to make sure that all frames have equal number of samples without
+    ### truncating any samples from the original signal
+    pad_signal = np.append(emphasized_signal, z)
+
+    indices = np.tile(np.arange(0, frame_length), (num_frames, 1)) + np.tile(np.arange(0, num_frames * frame_step, frame_step), (frame_length, 1)).T
+    frames = pad_signal[indices.astype(np.int32, copy=False)]
+
+    # Window
+    frames *= np.hamming(frame_length)
+
+    # Fourier-Transform and Power Spectrum
+    NFFT = 512
+
+    ### Magnitude of the FFT
+    mag_frames = np.absolute(np.fft.rfft(frames, NFFT))
+
+    ### Power Spectrum
+    pow_frames = ((1.0 / NFFT) * ((mag_frames) ** 2))
+
+    # Filter Banks
+    nfilt = 40
+
+    low_freq_mel = 0
+
+    ### Convert Hz to Mel
+    high_freq_mel = (2595 * np.log10(1 + (sample_rate / 2) / 700))
+
+    ### Equally spaced in Mel scale
+    mel_points = np.linspace(low_freq_mel, high_freq_mel, nfilt + 2)
+
+    ### Convert Mel to Hz
+    hz_points = (700 * (10**(mel_points / 2595) - 1))
+    bin = np.floor((NFFT + 1) * hz_points / sample_rate)
+
+    fbank = np.zeros((nfilt, int(np.floor(NFFT / 2 + 1))))
+    for m in range(1, nfilt + 1):
+        f_m_minus = int(bin[m - 1])   # left
+        f_m = int(bin[m])             # center
+        f_m_plus = int(bin[m + 1])    # right
+
+        for k in range(f_m_minus, f_m):
+            fbank[m - 1, k] = (k - bin[m - 1]) / (bin[m] - bin[m - 1])
+        for k in range(f_m, f_m_plus):
+            fbank[m - 1, k] = (bin[m + 1] - k) / (bin[m + 1] - bin[m])
+    filter_banks = np.dot(pow_frames, fbank.T)
+
+    ### Numerical Stability
+    filter_banks = np.where(filter_banks == 0, np.finfo(float).eps, filter_banks)
+
+    ### dB
+    filter_banks = 20 * np.log10(filter_banks)
+
+    # MFCCs
+    num_ceps = 12
+    cep_lifter = 22
+
+    ### Keep 2-13
+    mfcc = dct(filter_banks, type=2, axis=1, norm='ortho')[:, 1 : (num_ceps + 1)]
+
+    (nframes, ncoeff) = mfcc.shape
+    n = np.arange(ncoeff)
+    lift = 1 + (cep_lifter / 2) * np.sin(np.pi * n / cep_lifter)
+    mfcc *= lift
+
+    # Normalization
+    filter_banks = normalize(filter_banks)
+    mfcc = normalize(mfcc)
+
+    return filter_banks, mfcc
 
 def process_audio(input_dir, debug=False):
     files = []
@@ -61,31 +137,30 @@ def process_audio(input_dir, debug=False):
     for file in files:
         print(file)
 
-        start = time.time()
+        if debug:
+            file = 'build/test/de_f_63f5b79c76cf5a1a4bbd1c40f54b166e.fragment1.flac'
+            start = time.time()
 
-        spectrogram, sample_rate, hop_length = audio_to_spectrogram(file)
+        signal, sample_rate = sf.read(file)
+        assert len(signal) > 0
+        assert sample_rate == 22050
 
-        file_without_ext = os.path.splitext(file)[0]
-        normalized = normalize(spectrogram)
+        fb, mfcc = generate_fb_and_mfcc(signal, sample_rate)
+        assert fb.shape == (FB_HEIGHT, WIDTH, COLOR_DEPTH)
+        assert mfcc.shape == (MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
 
         # .npz extension is added automatically
-        np.savez_compressed(file_without_ext, data=normalized)
+        file_without_ext = os.path.splitext(file)[0]
+        np.savez_compressed(file_without_ext + '.fb', data=fb)
+        np.savez_compressed(file_without_ext + '.mfcc', data=mfcc)
 
         if debug:
             end = time.time()
             print("It took [s]: ", end - start)
 
             # data is casted to uint8, i.e. (0, 255)
-            imageio.imwrite('spectrogram_image.png', spectrogram)
-
-            # sample rate and hop length parameters
-            # are used to render the time axis
-            plt.figure()
-            lr.display.specshow(spectrogram, sr=sample_rate, hop_length=hop_length,
-                                x_axis='time', y_axis='mel')
-            plt.title('mel power spectrogram')
-            plt.colorbar(format='%+02.0f dB')
-            plt.savefig('spectrogram_chart.png')
+            imageio.imwrite('fb_image.png', fb)
+            imageio.imwrite('mfcc_image.png', mfcc)
 
             exit(0)
 
