@@ -40,11 +40,12 @@ def build_label_binarizer():
 
     return label_binarizer, clazzes
 
-def train_generator(fold_count, input_dir, input_shape):
+def train_generator(fold_count, input_dir, input_shape, max_iterations=1):
     label_binarizer, clazzes = build_label_binarizer()
 
     fold_indexes = list(range(1, fold_count + 1))
 
+    iteration = 0
     for fold_index in fold_indexes:
         train_fold_indexes = fold_indexes.copy()
         train_fold_indexes.remove(fold_index)
@@ -64,6 +65,10 @@ def train_generator(fold_count, input_dir, input_shape):
         del test_labels
         del test_features
         del test_metadata
+
+        iteration += 1
+        if iteration == max_iterations:
+            return
 
 if __name__ == "__main__":
     generator = train_generator(3, 'fb', (FB_HEIGHT, WIDTH, COLOR_DEPTH))

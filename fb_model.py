@@ -44,24 +44,33 @@ def build_model(input_shape):
 
     model.add(Conv2D(8, (3, 3), strides=(1, 1), padding='same', input_shape=input_shape))
     model.add(Activation('elu'))
-    model.add(MaxPooling2D(pool_size=(5,5), strides=(1,5), padding='same'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     model.add(Conv2D(8, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('elu'))
-    model.add(MaxPooling2D(pool_size=(5,5), strides=(1,5), padding='same'))
-
-    model.add(Conv2D(8, (3, 3), strides=(1, 1), padding='same'))
-    model.add(Activation('elu'))
+    model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
 
-    model.add(Conv2D(8, (3, 3), strides=(1, 1), padding='same'))
+    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('elu'))
-    model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(5,5), strides=(2,5), padding='same'))
+
+    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
+    model.add(Activation('elu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(5,5), strides=(1,5), padding='same'))
 
     model.add(Flatten())
 
     model.add(Dense(64))
     model.add(Activation('elu'))
+    model.add(BatchNormalization())
+
+    model.add(Dense(32))
+    model.add(Activation('elu'))
+    model.add(BatchNormalization())
 
     model.add(Dropout(0.5))
 
@@ -80,7 +89,7 @@ if __name__ == "__main__":
     input_shape = (FB_HEIGHT, WIDTH, COLOR_DEPTH)
 
     accuracies = []
-    generator = common.train_generator(3, 'fb', input_shape)
+    generator = common.train_generator(14, 'fb', input_shape, max_iterations=1)
 
     first = True
     for train_labels, train_features, test_labels, test_features in generator:
@@ -102,7 +111,7 @@ if __name__ == "__main__":
             train_labels,
             epochs=20,
             callbacks=[earlystop],
-            verbose=1,
+            verbose=2,
             validation_split=0.1
         )
 
@@ -114,5 +123,5 @@ if __name__ == "__main__":
 
     accuracies = np.array(accuracies)
 
-    print('## Summary')
+    print('\n## Summary')
     print("Mean: {mean}, Std {std}".format(mean=accuracies.mean(), std=accuracies.std()))
