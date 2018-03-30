@@ -118,7 +118,7 @@ def generate_folds(input_dir, input_ext, output_dir, group, shape):
 
     fold_index = 1
     while has_uids(uids):
-        print("Fold {0}".format(fold_index))
+        print("[{group}] Fold {index}".format(group=group, index=fold_index))
 
         generate_fold(
             uids, input_dir, input_ext,
