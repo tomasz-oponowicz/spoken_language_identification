@@ -1,11 +1,69 @@
 import os
 
+import matplotlib as mpl
+
+# use windowless enviorment
+mpl.use('Agg')
+
+import matplotlib.pyplot as plt
+
 import numpy as np
 
+import pandas as pd
+
+import seaborn as sns
+
 from sklearn import preprocessing
+from sklearn.metrics import classification_report
 
 from constants import *
 
+def flatten(binary_labels):
+    return np.argmax(binary_labels, axis=1)
+
+def test(labels, features, metadata, model, clazzes, title="test"):
+    probabilities = model.predict(features, verbose=0)
+
+    expected = flatten(labels)
+    actual = flatten(probabilities)
+
+    print("\n## {title}\n".format(title=title))
+
+    max_probabilities = np.amax(probabilities, axis=1)
+
+    # plt.figure() # reset plot
+    # plot = sns.distplot(max_probabilities, bins=10)
+    # plot.figure.savefig("{title}_probabilities.png".format(title=title))
+
+    print("Average confidence: {average}\n".format(
+        average=np.mean(max_probabilities)
+    ))
+
+    errors = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int),
+        index=clazzes, columns=GENDERS)
+    threshold_errors = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int),
+        index=clazzes, columns=GENDERS)
+    threshold_scores = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int),
+        index=clazzes, columns=GENDERS)
+    for index in range(len(actual)):
+        clazz = metadata[index][LANGUAGE_INDEX]
+        gender = metadata[index][GENDER_INDEX]
+        if actual[index] != expected[index]:
+            errors[gender][clazz] += 1
+        if actual[index] >= THRESHOLD:
+            if actual[index] != expected[index]:
+                threshold_errors[gender][clazz] += 1
+            if actual[index] == expected[index]:
+                threshold_scores[gender][clazz] += 1
+
+    print("Amount of errors by gender:")
+    print(errors, "\n")
+    print("Amount of errors by gender (threshold {0}):".format(THRESHOLD))
+    print(threshold_errors, "\n")
+    print("Amount of scores by gender (threshold {0}):".format(THRESHOLD))
+    print(threshold_scores, "\n")
+
+    print(classification_report(expected, actual, target_names=clazzes))
 
 def load_data(label_binarizer, input_dir, group, fold_indexes, input_shape):
     all_metadata = []
@@ -56,7 +114,7 @@ def train_generator(fold_count, input_dir, input_shape, max_iterations=1):
         test_labels, test_features, test_metadata = load_data(label_binarizer,
             input_dir, 'train', test_fold_indexes, input_shape)
 
-        yield train_labels, train_features, test_labels, test_features
+        yield train_labels, train_features, test_labels, test_features, test_metadata, clazzes
 
         del train_labels
         del train_features

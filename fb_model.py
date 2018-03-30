@@ -8,12 +8,6 @@ warnings.filterwarnings("ignore")
 
 import numpy as np
 
-import matplotlib.pyplot as plt
-
-import pandas as pd
-
-import seaborn as sns
-
 from sklearn import preprocessing
 from sklearn.metrics import classification_report
 
@@ -89,10 +83,10 @@ if __name__ == "__main__":
     input_shape = (FB_HEIGHT, WIDTH, COLOR_DEPTH)
 
     accuracies = []
-    generator = common.train_generator(14, 'fb', input_shape, max_iterations=1)
+    generator = common.train_generator(2, 'fb', input_shape, max_iterations=1)
 
     first = True
-    for train_labels, train_features, test_labels, test_features in generator:
+    for train_labels, train_features, test_labels, test_features, test_metadata, clazzes in generator:
         model = build_model(input_shape)
         if first:
             model.summary()
@@ -111,7 +105,7 @@ if __name__ == "__main__":
             train_labels,
             epochs=20,
             callbacks=[earlystop],
-            verbose=2,
+            verbose=1,
             validation_split=0.1
         )
 
@@ -120,6 +114,8 @@ if __name__ == "__main__":
 
         print('Accuracy:', accuracy)
         accuracies.append(accuracy)
+
+        common.test(test_labels, test_features, test_metadata, model, clazzes)
 
     accuracies = np.array(accuracies)
 

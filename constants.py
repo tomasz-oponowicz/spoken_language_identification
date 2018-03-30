@@ -10,3 +10,8 @@ DATA_KEY = 'data'
 
 LANGUAGES = ['en', 'de', 'es']
 GENDERS = ['m', 'f']
+
+LANGUAGE_INDEX = 0
+GENDER_INDEX = 1
+
+THRESHOLD = 0.8
