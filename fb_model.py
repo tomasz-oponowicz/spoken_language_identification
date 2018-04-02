@@ -53,7 +53,7 @@ def build_model(input_shape):
 
     # 20x250
 
-    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
+    model.add(Conv2D(32, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('elu'))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
