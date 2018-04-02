@@ -1,25 +1,17 @@
+from constants import *
+
 import os
 
-import matplotlib as mpl
-
-# use windowless enviorment
-mpl.use('Agg')
-
-import matplotlib.pyplot as plt
-
+# https://machinelearningmastery.com/reproducible-results-neural-networks-keras/
 import numpy as np
+np.random.seed(SEED)
+import tensorflow as tf
+tf.set_random_seed(SEED)
 
 import pandas as pd
 
-import seaborn as sns
-
 from sklearn import preprocessing
 from sklearn.metrics import classification_report
-
-from constants import *
-
-# for reproducibility
-np.random.seed(SEED)
 
 def flatten(binary_labels):
     return np.argmax(binary_labels, axis=1)
@@ -33,10 +25,6 @@ def test(labels, features, metadata, model, clazzes, title="test"):
     print("\n## {title}\n".format(title=title))
 
     max_probabilities = np.amax(probabilities, axis=1)
-
-    # plt.figure() # reset plot
-    # plot = sns.distplot(max_probabilities, bins=10)
-    # plot.figure.savefig("{title}_probabilities.png".format(title=title))
 
     print("Average confidence: {average}\n".format(
         average=np.mean(max_probabilities)

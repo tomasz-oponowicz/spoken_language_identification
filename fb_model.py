@@ -1,3 +1,6 @@
+
+from constants import *
+
 import os
 import time
 import re
@@ -6,7 +9,11 @@ import re
 import warnings
 warnings.filterwarnings("ignore")
 
+# https://machinelearningmastery.com/reproducible-results-neural-networks-keras/
 import numpy as np
+np.random.seed(SEED)
+import tensorflow as tf
+tf.set_random_seed(SEED)
 
 from sklearn import preprocessing
 from sklearn.metrics import classification_report
@@ -21,13 +28,7 @@ from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 from keras.models import load_model
 from keras.layers.normalization import BatchNormalization
 
-import tensorflow as tf
-
-from constants import *
 import common
-
-# for reproducibility
-np.random.seed(SEED)
 
 # supress tensorflow debug logs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -36,25 +37,35 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 def build_model(input_shape):
     model = Sequential()
 
+    # 40x1000
+
     model.add(Conv2D(8, (3, 3), strides=(1, 1), padding='same', input_shape=input_shape))
     model.add(Activation('elu'))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
+
+    # 40x500
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('elu'))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
 
+    # 20x250
+
     model.add(Conv2D(24, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('elu'))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(5,5), strides=(2,5), padding='same'))
 
+    # 10x50
+
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('elu'))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(5,5), strides=(1,5), padding='same'))
+
+    # 10x10
 
     model.add(Flatten())
 
@@ -87,7 +98,7 @@ if __name__ == "__main__":
     input_shape = (FB_HEIGHT, WIDTH, COLOR_DEPTH)
 
     accuracies = []
-    generator = common.train_generator(14, 'fb', input_shape, max_iterations=1)
+    generator = common.train_generator(5, 'fb', input_shape, max_iterations=1)
 
     first = True
     for train_labels, train_features, test_labels, test_features, test_metadata, clazzes in generator:
