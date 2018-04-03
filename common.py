@@ -2,11 +2,7 @@ from constants import *
 
 import os
 
-# https://machinelearningmastery.com/reproducible-results-neural-networks-keras/
 import numpy as np
-np.random.seed(SEED)
-import tensorflow as tf
-tf.set_random_seed(SEED)
 
 import pandas as pd
 

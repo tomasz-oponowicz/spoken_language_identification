@@ -1,7 +1,6 @@
 
 from constants import *
 
-import os
 import time
 import re
 
@@ -9,11 +8,32 @@ import re
 import warnings
 warnings.filterwarnings("ignore")
 
+## RANDOMNESS
 # https://machinelearningmastery.com/reproducible-results-neural-networks-keras/
+# https://keras.io/getting-started/faq/#how-can-i-obtain-reproducible-results-using-keras-during-development
+
+import os
+os.environ['PYTHONHASHSEED'] = '0'
+
+import random
+random.seed(SEED)
+
 import numpy as np
 np.random.seed(SEED)
+
+# supress tensorflow debug logs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+# disable auto tune
+# https://github.com/tensorflow/tensorflow/issues/5048
+os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
+
 import tensorflow as tf
+session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+from keras import backend as K
 tf.set_random_seed(SEED)
+sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+K.set_session(sess)
 
 from sklearn import preprocessing
 from sklearn.metrics import classification_report
@@ -29,10 +49,6 @@ from keras.models import load_model
 from keras.layers.normalization import BatchNormalization
 
 import common
-
-# supress tensorflow debug logs
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 
 def build_model(input_shape):
     model = Sequential()
