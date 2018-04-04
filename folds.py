@@ -141,5 +141,16 @@ if __name__ == "__main__":
         shape=(FB_HEIGHT, WIDTH, COLOR_DEPTH)
     )
 
+    generate_folds(
+        './build/test', '.mfcc.npz',
+        output_dir='mfcc', group='test',
+        shape=(MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
+    )
+    generate_folds(
+        './build/train', '.mfcc.npz',
+        output_dir='mfcc', group='train',
+        shape=(MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
+    )
+
     end = time.time()
     print("It took [s]: ", end - start)
