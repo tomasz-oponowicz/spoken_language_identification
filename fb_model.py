@@ -55,7 +55,7 @@ def build_model(input_shape):
 
     # 40x1000
 
-    model.add(Conv2D(8, (3, 3), strides=(1, 1), padding='same', input_shape=input_shape))
+    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same', input_shape=input_shape))
     model.add(Activation('elu'))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
@@ -79,16 +79,30 @@ def build_model(input_shape):
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('elu'))
     model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(5,5), strides=(1,5), padding='same'))
+    model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
-    # 10x25
+    # 10x63
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('elu'))
     model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(5,5), strides=(2,5), padding='same'))
+    model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
-    # 5x5
+    # 10x32
+
+    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
+    model.add(Activation('elu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
+
+    # 10x16
+
+    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
+    model.add(Activation('elu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
+
+    # 5x8
 
     model.add(Flatten())
 
@@ -99,10 +113,6 @@ def build_model(input_shape):
     model.add(Dense(32))
     model.add(Activation('elu'))
     model.add(BatchNormalization())
-
-    # model.add(Dense(16))
-    # model.add(Activation('elu'))
-    # model.add(BatchNormalization())
 
     model.add(Dropout(0.5))
 
@@ -137,6 +147,8 @@ if __name__ == "__main__":
             verbose=0,
             mode='auto'
         )
+
+        # exit(1)
 
         model.fit(
             train_features,
