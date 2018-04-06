@@ -61,49 +61,53 @@ def build_model(input_shape):
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same', input_shape=input_shape))
     model.add(Activation('relu'))
-    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     # 12x500
 
+    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same'))
+    # model.add(Activation('relu'))
+    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same'))
+    # model.add(Activation('relu'))
+    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Activation('relu'))
+
+    model.add(MaxPooling2D(pool_size=(3,3), strides=(2,1), padding='same'))
+
+    # 6x500
+
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('relu'))
-    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
-    # 12x250
+    # 6x250
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('relu'))
-    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
-    # 12x125
+    # 6x125
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('relu'))
-    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
-    # 12x63
+    # 6x62
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('relu'))
-    # model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
+    model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     # 6x32
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('relu'))
-    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     # 6x16
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('relu'))
-    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     # 6x8
@@ -112,13 +116,9 @@ def build_model(input_shape):
 
     model.add(Dense(64))
     model.add(Activation('tanh'))
-    # model.add(BatchNormalization())
 
     model.add(Dense(32))
     model.add(Activation('tanh'))
-    # model.add(BatchNormalization())
-
-    # model.add(Dropout(0.5, seed=SEED))
 
     model.add(Dense(len(LANGUAGES)))
     model.add(Activation('softmax'))
