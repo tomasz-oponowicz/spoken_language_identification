@@ -59,17 +59,17 @@ def build_model(input_shape):
 
     # 12x1000
 
-    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same', input_shape=input_shape))
-    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same'))
-    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Conv2D(16, (3, 5), strides=(1, 1), padding='same', input_shape=input_shape))
+    model.add(Conv2D(16, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Conv2D(16, (3, 5), strides=(1, 1), padding='same'))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     # 12x500
 
-    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same'))
-    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same'))
-    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Conv2D(16, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Conv2D(16, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Conv2D(16, (3, 5), strides=(1, 1), padding='same'))
     model.add(Activation('relu'))
 
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,1), padding='same'))
