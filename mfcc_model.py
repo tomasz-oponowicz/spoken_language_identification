@@ -1,5 +1,34 @@
 
-from constants import *
+## Avoid randomness
+# https://machinelearningmastery.com/reproducible-results-neural-networks-keras/
+# https://keras.io/getting-started/faq/#how-can-i-obtain-reproducible-results-using-keras-during-development
+# https://machinelearningmastery.com/reproducible-results-neural-networks-keras/#comment-414394
+
+import os
+os.environ['PYTHONHASHSEED'] = '42'
+
+# supress tensorflow debug logs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+# disable auto tune
+# https://github.com/tensorflow/tensorflow/issues/5048
+# os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
+
+import random as rn
+rn.seed(42)
+
+import numpy as np
+np.random.seed(42)
+
+import tensorflow as tf
+tf.set_random_seed(42)
+
+session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+
+from keras import backend as K
+
+sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+K.set_session(sess)
 
 import time
 import re
@@ -7,33 +36,6 @@ import re
 # supress all warnings (especially matplotlib warnings)
 import warnings
 warnings.filterwarnings("ignore")
-
-## RANDOMNESS
-# https://machinelearningmastery.com/reproducible-results-neural-networks-keras/
-# https://keras.io/getting-started/faq/#how-can-i-obtain-reproducible-results-using-keras-during-development
-
-import os
-os.environ['PYTHONHASHSEED'] = '0'
-
-import random
-random.seed(SEED)
-
-import numpy as np
-np.random.seed(SEED)
-
-# supress tensorflow debug logs
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
-# disable auto tune
-# https://github.com/tensorflow/tensorflow/issues/5048
-os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
-
-import tensorflow as tf
-session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
-from keras import backend as K
-tf.set_random_seed(SEED)
-sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-K.set_session(sess)
 
 from sklearn import preprocessing
 from sklearn.metrics import classification_report
@@ -48,6 +50,7 @@ from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 from keras.models import load_model
 from keras.layers.normalization import BatchNormalization
 
+from constants import *
 import common
 
 def build_model(input_shape):
@@ -126,12 +129,12 @@ def build_model(input_shape):
     )
 
     return model
-
+# https://machinelearningmastery.com/reproducible-results-neural-networks-keras/#comment-414394
 if __name__ == "__main__":
     input_shape = (MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
 
     accuracies = []
-    generator = common.train_generator(14, 'mfcc', input_shape, max_iterations=1)
+    generator = common.train_generator(2, 'mfcc', input_shape, max_iterations=1)
 
     first = True
     for train_labels, train_features, test_labels, test_features, test_metadata, clazzes in generator:
@@ -147,8 +150,6 @@ if __name__ == "__main__":
             verbose=0,
             mode='auto'
         )
-
-        # exit(1)
 
         model.fit(
             train_features,
