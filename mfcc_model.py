@@ -4,6 +4,10 @@
 # https://keras.io/getting-started/faq/#how-can-i-obtain-reproducible-results-using-keras-during-development
 # https://machinelearningmastery.com/reproducible-results-neural-networks-keras/#comment-414394
 
+import numpy as np
+import tensorflow as tf
+import random as rn
+
 import os
 os.environ['PYTHONHASHSEED'] = '42'
 
@@ -14,18 +18,15 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # https://github.com/tensorflow/tensorflow/issues/5048
 # os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
 
-import random as rn
-rn.seed(42)
-
-import numpy as np
 np.random.seed(42)
 
-import tensorflow as tf
-tf.set_random_seed(42)
+rn.seed(42)
 
 session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
 
 from keras import backend as K
+
+tf.set_random_seed(42)
 
 sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
 K.set_session(sess)
@@ -59,50 +60,50 @@ def build_model(input_shape):
     # 12x1000
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same', input_shape=input_shape))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     # 12x500
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     # 12x250
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     # 12x125
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     # 12x63
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
 
     # 6x32
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     # 6x16
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    # model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
     # 6x8
@@ -110,31 +111,31 @@ def build_model(input_shape):
     model.add(Flatten())
 
     model.add(Dense(64))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
+    model.add(Activation('tanh'))
+    # model.add(BatchNormalization())
 
     model.add(Dense(32))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
+    model.add(Activation('tanh'))
+    # model.add(BatchNormalization())
 
-    model.add(Dropout(0.5))
+    # model.add(Dropout(0.5, seed=SEED))
 
     model.add(Dense(len(LANGUAGES)))
     model.add(Activation('softmax'))
 
     model.compile(
         loss='categorical_crossentropy',
-        optimizer=Nadam(lr=1e-4),
+        optimizer='sgd',
         metrics=['accuracy']
     )
 
     return model
-# https://machinelearningmastery.com/reproducible-results-neural-networks-keras/#comment-414394
+
 if __name__ == "__main__":
     input_shape = (MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
 
     accuracies = []
-    generator = common.train_generator(2, 'mfcc', input_shape, max_iterations=1)
+    generator = common.train_generator(14, 'mfcc', input_shape, max_iterations=1)
 
     first = True
     for train_labels, train_features, test_labels, test_features, test_metadata, clazzes in generator:
@@ -143,10 +144,13 @@ if __name__ == "__main__":
             model.summary()
             first = False
 
+        checkpoint = ModelCheckpoint('model.h5', monitor='val_loss', verbose=0,
+            save_best_only=True, mode='min')
+
         earlystop = EarlyStopping(
             monitor='val_loss',
             min_delta=0,
-            patience=2,
+            patience=3,
             verbose=0,
             mode='auto'
         )
@@ -155,10 +159,12 @@ if __name__ == "__main__":
             train_features,
             train_labels,
             epochs=20,
-            callbacks=[earlystop],
+            callbacks=[checkpoint, earlystop],
             verbose=1,
             validation_split=0.1
         )
+
+        model = load_model('model.h5')
 
         scores = model.evaluate(test_features, test_labels, verbose=0)
         accuracy = scores[1]
