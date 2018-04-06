@@ -76,9 +76,9 @@ def build_model(input_shape):
 
     # 6x500
 
-    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same'))
-    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same'))
-    model.add(Conv2D(8, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Conv2D(16, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Conv2D(16, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Conv2D(16, (3, 5), strides=(1, 1), padding='same'))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
 
