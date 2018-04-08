@@ -55,64 +55,44 @@ def build_model(input_shape):
 
     # 40x1000
 
-    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same', input_shape=input_shape))
+    model.add(Conv2D(4, (3, 3), strides=(1, 1), padding='same', input_shape=input_shape))
     model.add(Activation('elu'))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
-
-    # 40x500
-
-    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
 
-    # 20x250
+    # 20x500
 
-    model.add(Conv2D(32, (3, 3), strides=(1, 1), padding='same'))
+    model.add(Conv2D(8, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('elu'))
-    model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
 
-    # 10x125
+    # 10x250
 
     model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
     model.add(Activation('elu'))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
-
-    # 10x63
-
-    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
-
-    # 10x32
-
-    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(3,3), strides=(1,2), padding='same'))
-
-    # 10x16
-
-    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
 
-    # 5x8
+    # 5x125
+
+    model.add(Conv2D(32, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Activation('elu'))
+    model.add(MaxPooling2D(pool_size=(3,5), strides=(1,5), padding='same'))
+
+    # 5x25
+
+    model.add(Conv2D(256, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Activation('elu'))
+    model.add(MaxPooling2D(pool_size=(3,5), strides=(1,5), padding='same'))
+    model.add(AveragePooling2D(pool_size=(5,5), strides=(5,5), padding='valid'))
+
+    # 1x1
 
     model.add(Flatten())
 
-    model.add(Dense(64))
-    model.add(Activation('elu'))
-    model.add(BatchNormalization())
-
     model.add(Dense(32))
     model.add(Activation('elu'))
-    model.add(BatchNormalization())
+
+    # model.add(Dense(32))
+    # model.add(Activation('elu'))
 
     model.add(Dropout(0.5))
 
@@ -121,7 +101,7 @@ def build_model(input_shape):
 
     model.compile(
         loss='categorical_crossentropy',
-        optimizer=Nadam(lr=1e-4),
+        optimizer='sgd',
         metrics=['accuracy']
     )
 
@@ -140,24 +120,27 @@ if __name__ == "__main__":
             model.summary()
             first = False
 
+        checkpoint = ModelCheckpoint('model.h5', monitor='val_loss', verbose=0,
+            save_best_only=True, mode='min')
+
         earlystop = EarlyStopping(
             monitor='val_loss',
             min_delta=0,
-            patience=2,
+            patience=3,
             verbose=0,
             mode='auto'
         )
-
-        # exit(1)
 
         model.fit(
             train_features,
             train_labels,
             epochs=20,
-            callbacks=[earlystop],
+            callbacks=[checkpoint, earlystop],
             verbose=1,
-            validation_split=0.1
+            validation_data=(test_features, test_labels)
         )
+
+        model = load_model('model.h5')
 
         scores = model.evaluate(test_features, test_labels, verbose=0)
         accuracy = scores[1]

@@ -69,6 +69,7 @@ def load_data(label_binarizer, input_dir, group, fold_indexes, input_shape):
 
     all_metadata = np.concatenate(all_metadata)
     all_features = np.concatenate(all_features)
+    all_features = all_features.astype('float32', copy=False)
     all_labels = label_binarizer.transform(all_metadata[:, 0])
 
     print("[{group}] labels: {labels}, features: {features}".format(
