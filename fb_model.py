@@ -47,6 +47,7 @@ from keras.utils import np_utils
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 from keras.models import load_model
 from keras.layers.normalization import BatchNormalization
+from keras import regularizers
 
 import common
 
@@ -55,31 +56,37 @@ def build_model(input_shape):
 
     # 40x1000
 
-    model.add(Conv2D(4, (3, 3), strides=(1, 1), padding='same', input_shape=input_shape))
+    model.add(Conv2D(4, (3, 3), strides=(1, 1), padding='same',
+        kernel_regularizer=regularizers.l2(0.001),
+        input_shape=input_shape))
     model.add(Activation('elu'))
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
 
     # 20x500
 
-    model.add(Conv2D(8, (3, 3), strides=(1, 1), padding='same'))
+    model.add(Conv2D(8, (3, 3), strides=(1, 1), padding='same',
+        kernel_regularizer=regularizers.l2(0.001)))
     model.add(Activation('elu'))
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
 
     # 10x250
 
-    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same'))
+    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same',
+        kernel_regularizer=regularizers.l2(0.001)))
     model.add(Activation('elu'))
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
 
     # 5x125
 
-    model.add(Conv2D(128, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Conv2D(128, (3, 5), strides=(1, 1), padding='same',
+        kernel_regularizer=regularizers.l2(0.001)))
     model.add(Activation('elu'))
     model.add(MaxPooling2D(pool_size=(3,5), strides=(1,5), padding='same'))
 
     # 5x25
 
-    model.add(Conv2D(256, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Conv2D(256, (3, 5), strides=(1, 1), padding='same',
+        kernel_regularizer=regularizers.l2(0.001)))
     model.add(Activation('elu'))
     model.add(MaxPooling2D(pool_size=(3,5), strides=(1,5), padding='same'))
     model.add(AveragePooling2D(pool_size=(5,5), strides=(5,5), padding='valid'))
@@ -88,8 +95,9 @@ def build_model(input_shape):
 
     model.add(Flatten())
 
-    model.add(Dense(32))
-    model.add(Activation('elu'))
+    model.add(Dense(32,
+        activation='elu',
+        kernel_regularizer=regularizers.l2(0.001)))
 
     # model.add(Dense(32))
     # model.add(Activation('elu'))
