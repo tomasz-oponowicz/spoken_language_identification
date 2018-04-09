@@ -41,7 +41,7 @@ from sklearn.metrics import classification_report
 from keras.models import Model, load_model, Sequential
 from keras.layers import Conv2D, MaxPooling2D, AveragePooling2D, Dense, Flatten
 from keras.layers import Dropout, Input, Activation
-from keras.optimizers import Nadam
+from keras.optimizers import Nadam, SGD
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import np_utils
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
@@ -56,7 +56,7 @@ def build_model(input_shape):
 
     # 40x1000
 
-    model.add(Conv2D(4, (3, 3), strides=(1, 1), padding='same',
+    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same',
         kernel_regularizer=regularizers.l2(0.001),
         input_shape=input_shape))
     model.add(Activation('elu'))
@@ -64,14 +64,14 @@ def build_model(input_shape):
 
     # 20x500
 
-    model.add(Conv2D(8, (3, 3), strides=(1, 1), padding='same',
+    model.add(Conv2D(32, (3, 3), strides=(1, 1), padding='same',
         kernel_regularizer=regularizers.l2(0.001)))
     model.add(Activation('elu'))
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
 
     # 10x250
 
-    model.add(Conv2D(16, (3, 3), strides=(1, 1), padding='same',
+    model.add(Conv2D(64, (3, 3), strides=(1, 1), padding='same',
         kernel_regularizer=regularizers.l2(0.001)))
     model.add(Activation('elu'))
     model.add(MaxPooling2D(pool_size=(3,3), strides=(2,2), padding='same'))
@@ -99,17 +99,16 @@ def build_model(input_shape):
         activation='elu',
         kernel_regularizer=regularizers.l2(0.001)))
 
-    # model.add(Dense(32))
-    # model.add(Activation('elu'))
-
     model.add(Dropout(0.5))
 
     model.add(Dense(len(LANGUAGES)))
     model.add(Activation('softmax'))
 
+    sgd = SGD(lr=0.01, decay=1e-6, momentum=0.0, nesterov=False)
+
     model.compile(
         loss='categorical_crossentropy',
-        optimizer='sgd',
+        optimizer=sgd,
         metrics=['accuracy']
     )
 
@@ -146,7 +145,7 @@ if __name__ == "__main__":
             callbacks=[checkpoint, earlystop],
             verbose=1,
             validation_data=(test_features, test_labels),
-            batch_size=16
+            batch_size=8
         )
 
         model = load_model('model.h5')
