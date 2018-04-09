@@ -73,7 +73,7 @@ def build_model(input_shape):
 
     # 5x125
 
-    model.add(Conv2D(32, (3, 5), strides=(1, 1), padding='same'))
+    model.add(Conv2D(128, (3, 5), strides=(1, 1), padding='same'))
     model.add(Activation('elu'))
     model.add(MaxPooling2D(pool_size=(3,5), strides=(1,5), padding='same'))
 
@@ -137,7 +137,8 @@ if __name__ == "__main__":
             epochs=20,
             callbacks=[checkpoint, earlystop],
             verbose=1,
-            validation_data=(test_features, test_labels)
+            validation_data=(test_features, test_labels),
+            batch_size=16
         )
 
         model = load_model('model.h5')
