@@ -116,6 +116,30 @@ def train_generator(fold_count, input_dir, input_shape, max_iterations=1):
         if iteration == max_iterations:
             return
 
+def normalize_spectrogram(spectrogram):
+
+    # Mean Normalization
+    spectrogram -= (np.mean(spectrogram, axis=0) + 1e-8)
+
+    # MinMax Scaler, scale values between (0,1)
+    normalized = (spectrogram - np.min(spectrogram)) / (np.max(spectrogram) - np.min(spectrogram))
+
+    # Reduce precision, float16
+    normalized = normalized.astype(DATA_TYPE)
+
+    # Rotate 90deg
+    normalized = np.swapaxes(normalized, 0, 1)
+
+    # Reshape, tensor 3d
+    (height, width) = normalized.shape
+    normalized = normalized.reshape(height, width, COLOR_DEPTH)
+
+    assert normalized.dtype == DATA_TYPE
+    assert np.max(normalized) == 1.0
+    assert np.min(normalized) == 0.0
+
+    return normalized
+
 if __name__ == "__main__":
     generator = train_generator(3, 'fb', (FB_HEIGHT, WIDTH, COLOR_DEPTH))
     for train_labels, train_features, test_labels, test_features in generator:

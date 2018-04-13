@@ -5,33 +5,10 @@ import time
 import imageio
 import numpy as np
 import soundfile as sf
+import librosa as lr
 from scipy.fftpack import dct
 
 from constants import *
-
-def normalize(spectrogram):
-
-    # Mean Normalization
-    spectrogram -= (np.mean(spectrogram, axis=0) + 1e-8)
-
-    # MinMax Scaler, scale values between (0,1)
-    normalized = (spectrogram - np.min(spectrogram)) / (np.max(spectrogram) - np.min(spectrogram))
-
-    # Reduce precision, float16
-    normalized = normalized.astype(DATA_TYPE)
-
-    # Rotate 90deg
-    normalized = np.swapaxes(normalized, 0, 1)
-
-    # Reshape, tensor 3d
-    (height, width) = normalized.shape
-    normalized = normalized.reshape(height, width, COLOR_DEPTH)
-
-    assert normalized.dtype == DATA_TYPE
-    assert np.max(normalized) == 1.0
-    assert np.min(normalized) == 0.0
-
-    return normalized
 
 # source1: http://haythamfayek.com/2016/04/21/speech-processing-for-machine-learning.html
 # source2: https://www.kaggle.com/ybonde/log-spectrogram-and-mfcc-filter-bank-example
@@ -121,10 +98,6 @@ def generate_fb_and_mfcc(signal, sample_rate):
     lift = 1 + (cep_lifter / 2) * np.sin(np.pi * n / cep_lifter)
     mfcc *= lift
 
-    # Normalization
-    filter_banks = normalize(filter_banks)
-    mfcc = normalize(mfcc)
-
     return filter_banks, mfcc
 
 def process_audio(input_dir, debug=False):
@@ -146,13 +119,37 @@ def process_audio(input_dir, debug=False):
         assert sample_rate == 22050
 
         fb, mfcc = generate_fb_and_mfcc(signal, sample_rate)
-        assert fb.shape == (FB_HEIGHT, WIDTH, COLOR_DEPTH)
-        assert mfcc.shape == (MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
+
+        fb = fb.astype(DATA_TYPE, copy=False)
+        mfcc = mfcc.astype(DATA_TYPE, copy=False)
+
+        assert fb.dtype == DATA_TYPE
+        assert mfcc.dtype == DATA_TYPE
+        assert fb.shape == (WIDTH, FB_HEIGHT)
+        assert mfcc.shape == (WIDTH, MFCC_HEIGHT)
+
+        # source1: http://aqibsaeed.github.io/2016-09-03-urban-sound-classification-part-1/
+        # source2: https://www.kaggle.com/ybonde/log-spectrogram-and-mfcc-filter-bank-example
+        stft = np.abs(lr.stft(signal))
+        chroma = lr.feature.chroma_stft(S=stft, sr=sample_rate)
+        contrast = lr.feature.spectral_contrast(S=stft, sr=sample_rate)
+
+        chroma = chroma.astype(DATA_TYPE, copy=False)
+        contrast = contrast.astype(DATA_TYPE, copy=False)
+
+        assert chroma.dtype == DATA_TYPE
+        assert contrast.dtype == DATA_TYPE
+        assert chroma.shape == (CHROMA_HEIGHT, CHROMA_WIDTH)
+        assert contrast.shape == (CONTRAST_HEIGHT, CONTRAST_WIDTH)
 
         # .npz extension is added automatically
         file_without_ext = os.path.splitext(file)[0]
+
         np.savez_compressed(file_without_ext + '.fb', data=fb)
         np.savez_compressed(file_without_ext + '.mfcc', data=mfcc)
+
+        np.savez_compressed(file_without_ext + '.chroma', data=chroma)
+        np.savez_compressed(file_without_ext + '.contrast', data=contrast)
 
         if debug:
             end = time.time()
@@ -162,13 +159,16 @@ def process_audio(input_dir, debug=False):
             imageio.imwrite('fb_image.png', fb)
             imageio.imwrite('mfcc_image.png', mfcc)
 
+            imageio.imwrite('chroma_image.png', chroma)
+            imageio.imwrite('contrast_image.png', contrast)
+
             exit(0)
 
 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='Generate spectrograms from audio samples.')
+    parser = argparse.ArgumentParser(description='Generate various features from audio samples.')
     parser.add_argument('--debug', dest='debug', action='store_true')
     parser.set_defaults(debug=False)
 
@@ -177,6 +177,5 @@ if __name__ == "__main__":
     if args.debug:
         process_audio('build/train', debug=True)
     else:
-        process_audio('build/valid')
         process_audio('build/test')
         process_audio('build/train')
