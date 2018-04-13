@@ -8,6 +8,7 @@ import time
 import numpy as np
 
 from constants import *
+import common
 
 def remove_extension(file):
     return os.path.splitext(file)[0]
@@ -52,7 +53,7 @@ def has_uids(uids):
     return True
 
 
-def generate_fold(uids, input_dir, input_ext, output_dir, group, fold_index, shape):
+def generate_fold(uids, input_dir, input_ext, output_dir, group, fold_index, input_shape, normalize, output_shape):
 
     # pull uid for each a language, gender pair
     fold_uids = []
@@ -76,7 +77,7 @@ def generate_fold(uids, input_dir, input_ext, output_dir, group, fold_index, sha
     features = np.memmap(
         os.path.join(output_dir, filename),
         dtype=DATA_TYPE, mode='w+',
-        shape=(len(fold_files),) + shape
+        shape=(len(fold_files),) + output_shape
     )
 
     # append data to a file array
@@ -89,10 +90,10 @@ def generate_fold(uids, input_dir, input_ext, output_dir, group, fold_index, sha
         gender = filename.split('_')[1]
 
         data = np.load(fold_file)[DATA_KEY]
-        assert data.shape == shape
+        assert data.shape == input_shape
         assert data.dtype == DATA_TYPE
 
-        features[index] = data
+        features[index] = normalize(data)
         metadata.append((language, gender, filename))
 
     assert len(metadata) == len(fold_files)
@@ -108,7 +109,7 @@ def generate_fold(uids, input_dir, input_ext, output_dir, group, fold_index, sha
     features.flush()
     del features
 
-def generate_folds(input_dir, input_ext, output_dir, group, shape):
+def generate_folds(input_dir, input_ext, output_dir, group, input_shape, normalize, output_shape):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -122,7 +123,8 @@ def generate_folds(input_dir, input_ext, output_dir, group, shape):
 
         generate_fold(
             uids, input_dir, input_ext,
-            output_dir, group, fold_index, shape
+            output_dir, group, fold_index,
+            input_shape, normalize, output_shape
         )
 
         fold_index += 1
@@ -133,23 +135,31 @@ if __name__ == "__main__":
     generate_folds(
         './build/test', '.fb.npz',
         output_dir='fb', group='test',
-        shape=(FB_HEIGHT, WIDTH, COLOR_DEPTH)
+        input_shape=(WIDTH, FB_HEIGHT),
+        normalize=common.normalize_fb,
+        output_shape=(FB_HEIGHT, WIDTH, COLOR_DEPTH)
     )
     generate_folds(
         './build/train', '.fb.npz',
         output_dir='fb', group='train',
-        shape=(FB_HEIGHT, WIDTH, COLOR_DEPTH)
+        input_shape=(WIDTH, FB_HEIGHT),
+        normalize=common.normalize_fb,
+        output_shape=(FB_HEIGHT, WIDTH, COLOR_DEPTH)
     )
 
     generate_folds(
         './build/test', '.mfcc.npz',
         output_dir='mfcc', group='test',
-        shape=(MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
+        input_shape=(WIDTH, MFCC_HEIGHT),
+        normalize=common.normalize_mfcc,
+        output_shape=(MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
     )
     generate_folds(
         './build/train', '.mfcc.npz',
         output_dir='mfcc', group='train',
-        shape=(MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
+        input_shape=(WIDTH, MFCC_HEIGHT),
+        normalize=common.normalize_mfcc,
+        output_shape=(MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
     )
 
     end = time.time()
