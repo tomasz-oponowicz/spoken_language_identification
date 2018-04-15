@@ -4,15 +4,9 @@ FB_HEIGHT = 40 # filter banks
 MFCC_HEIGHT = 12
 WIDTH = 1000
 
-CHROMA_HEIGHT = 12
-CHROMA_WIDTH = 431
-
-CONTRAST_HEIGHT = 7
-CONTRAST_WIDTH = 431
-
 COLOR_DEPTH = 1
 
-DATA_TYPE = 'float16'
+DATA_TYPE = 'float32'
 DATA_KEY = 'data'
 
 LANGUAGES = ['en', 'de', 'es']

@@ -128,28 +128,11 @@ def process_audio(input_dir, debug=False):
         assert fb.shape == (WIDTH, FB_HEIGHT)
         assert mfcc.shape == (WIDTH, MFCC_HEIGHT)
 
-        # source1: http://aqibsaeed.github.io/2016-09-03-urban-sound-classification-part-1/
-        # source2: https://www.kaggle.com/ybonde/log-spectrogram-and-mfcc-filter-bank-example
-        stft = np.abs(lr.stft(signal))
-        chroma = lr.feature.chroma_stft(S=stft, sr=sample_rate)
-        contrast = lr.feature.spectral_contrast(S=stft, sr=sample_rate)
-
-        chroma = chroma.astype(DATA_TYPE, copy=False)
-        contrast = contrast.astype(DATA_TYPE, copy=False)
-
-        assert chroma.dtype == DATA_TYPE
-        assert contrast.dtype == DATA_TYPE
-        assert chroma.shape == (CHROMA_HEIGHT, CHROMA_WIDTH)
-        assert contrast.shape == (CONTRAST_HEIGHT, CONTRAST_WIDTH)
-
         # .npz extension is added automatically
         file_without_ext = os.path.splitext(file)[0]
 
         np.savez_compressed(file_without_ext + '.fb', data=fb)
         np.savez_compressed(file_without_ext + '.mfcc', data=mfcc)
-
-        np.savez_compressed(file_without_ext + '.chroma', data=chroma)
-        np.savez_compressed(file_without_ext + '.contrast', data=contrast)
 
         if debug:
             end = time.time()
@@ -158,9 +141,6 @@ def process_audio(input_dir, debug=False):
             # data is casted to uint8, i.e. (0, 255)
             imageio.imwrite('fb_image.png', fb)
             imageio.imwrite('mfcc_image.png', mfcc)
-
-            imageio.imwrite('chroma_image.png', chroma)
-            imageio.imwrite('contrast_image.png', contrast)
 
             exit(0)
 

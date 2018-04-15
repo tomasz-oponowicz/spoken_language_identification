@@ -151,89 +151,8 @@ def normalize_fb(spectrogram):
 
 normalize_mfcc = normalize_fb
 
-def normalize_chroma(spectrogram):
-    return np.mean(spectrogram.T, axis=0)
-
-normalize_contrast = normalize_chroma
-
-def normalize_fb_mean(spectrogram):
-
-    # Mean Normalization
-    spectrogram -= (np.mean(spectrogram, axis=0) + 1e-8)
-
-    # Rotate 90deg
-    spectrogram = np.swapaxes(spectrogram, 0, 1)
-
-    return np.mean(spectrogram.T, axis=0)
-
-normalize_mfcc_mean = normalize_fb_mean
-
 if __name__ == "__main__":
     start = time.time()
-
-    # fb_mean
-    generate_folds(
-        './build/test', '.fb.npz',
-        output_dir='fb_mean', group='test',
-        input_shape=(WIDTH, FB_HEIGHT),
-        normalize=normalize_fb_mean,
-        output_shape=(FB_HEIGHT,)
-    )
-    generate_folds(
-        './build/train', '.fb.npz',
-        output_dir='fb_mean', group='train',
-        input_shape=(WIDTH, FB_HEIGHT),
-        normalize=normalize_fb_mean,
-        output_shape=(FB_HEIGHT,)
-    )
-
-    # mfcc_mean
-    generate_folds(
-        './build/test', '.mfcc.npz',
-        output_dir='mfcc_mean', group='test',
-        input_shape=(WIDTH, MFCC_HEIGHT),
-        normalize=normalize_mfcc_mean,
-        output_shape=(MFCC_HEIGHT,)
-    )
-    generate_folds(
-        './build/train', '.mfcc.npz',
-        output_dir='mfcc_mean', group='train',
-        input_shape=(WIDTH, MFCC_HEIGHT),
-        normalize=normalize_mfcc_mean,
-        output_shape=(MFCC_HEIGHT,)
-    )
-
-    # chroma
-    generate_folds(
-        './build/test', '.chroma.npz',
-        output_dir='chroma', group='test',
-        input_shape=(CHROMA_HEIGHT, CHROMA_WIDTH),
-        normalize=normalize_chroma,
-        output_shape=(CHROMA_HEIGHT,)
-    )
-    generate_folds(
-        './build/train', '.chroma.npz',
-        output_dir='chroma', group='train',
-        input_shape=(CHROMA_HEIGHT, CHROMA_WIDTH),
-        normalize=normalize_chroma,
-        output_shape=(CHROMA_HEIGHT,)
-    )
-
-    # contrast
-    generate_folds(
-        './build/test', '.contrast.npz',
-        output_dir='contrast', group='test',
-        input_shape=(CONTRAST_HEIGHT, CONTRAST_WIDTH),
-        normalize=normalize_contrast,
-        output_shape=(CONTRAST_HEIGHT,)
-    )
-    generate_folds(
-        './build/train', '.contrast.npz',
-        output_dir='contrast', group='train',
-        input_shape=(CONTRAST_HEIGHT, CONTRAST_WIDTH),
-        normalize=normalize_contrast,
-        output_shape=(CONTRAST_HEIGHT,)
-    )
 
     # fb
     generate_folds(
