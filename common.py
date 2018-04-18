@@ -115,28 +115,39 @@ def train_generator(fold_count, input_dir, input_shape, max_iterations=1):
         if iteration == max_iterations:
             return
 
-def normalize_fb(spectrogram):
+def remove_extension(file):
+    return os.path.splitext(file)[0]
 
-    # Mean Normalization
-    spectrogram -= (np.mean(spectrogram, axis=0) + 1e-8)
 
-    # MinMax Scaler, scale values between (0,1)
-    normalized = (spectrogram - np.min(spectrogram)) / (np.max(spectrogram) - np.min(spectrogram))
+def get_filename(file):
+    return os.path.basename(remove_extension(file))
 
-    # Rotate 90deg
-    normalized = np.swapaxes(normalized, 0, 1)
 
-    # Reshape, tensor 3d
-    (height, width) = normalized.shape
-    normalized = normalized.reshape(height, width, COLOR_DEPTH)
+def group_uids(files):
+    uids = dict()
 
-    assert normalized.dtype == DATA_TYPE
-    assert np.max(normalized) == 1.0
-    assert np.min(normalized) == 0.0
+    # intialize empty sets
+    for language in LANGUAGES:
+        uids[language] = dict()
+        for gender in GENDERS:
+            uids[language][gender] = set()
 
-    return normalized
+    # extract uids and append to language/gender sets
+    for file in files:
+        info = get_filename(file).split('_')
 
-normalize_mfcc = normalize_fb
+        language = info[0]
+        gender = info[1]
+        uid = info[2].split('.')[0]
+
+        uids[language][gender].add(uid)
+
+    # convert sets to lists
+    for language in LANGUAGES:
+        for gender in GENDERS:
+            uids[language][gender] = sorted(list(uids[language][gender]))
+
+    return uids
 
 if __name__ == "__main__":
     generator = train_generator(3, 'fb', (FB_HEIGHT, WIDTH, COLOR_DEPTH))

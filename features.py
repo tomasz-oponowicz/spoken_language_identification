@@ -7,6 +7,7 @@ import numpy as np
 import soundfile as sf
 import librosa as lr
 from scipy.fftpack import dct
+import sidekit.frontend.features as sk
 
 from constants import *
 
@@ -128,11 +129,33 @@ def process_audio(input_dir, debug=False):
         assert fb.shape == (WIDTH, FB_HEIGHT)
         assert mfcc.shape == (WIDTH, MFCC_HEIGHT)
 
+        # source: http://www-lium.univ-lemans.fr/sidekit/_modules/frontend/features.html
+        # source: https://pdfs.semanticscholar.org/d3a3/7f74fcf835bc89c08d756aa4f14057dc53b8.pdf
+        mfcc2, _, _, _ = sk.mfcc(signal, fs=sample_rate, nceps=11)
+        # remove log energy at the begining:
+        mfcc2 = mfcc2[:, 1:] # output: 1000x10
+        sdc2 = sk.shifted_delta_cepstral(mfcc2, d=1, p=3, k=3)
+        # remove mfcc copy at the begining:
+        sdc2 = sdc2[:,10:] # output: 1000x30
+        sdc2 = sdc2.astype(DATA_TYPE, copy=False)
+        assert sdc2.dtype == DATA_TYPE
+        assert sdc2.shape == (WIDTH, SDC_HEIGHT)
+
+        mfcc3, _, _, _ = sk.mfcc(signal, fs=sample_rate, nceps=10)
+        sdc3 = sk.shifted_delta_cepstral(mfcc3, d=1, p=3, k=3)
+        # remove mfcc copy at the begining:
+        sdc3 = sdc3[:,10:] # output: 1000x30
+        sdc3 = sdc3.astype(DATA_TYPE, copy=False)
+        assert sdc3.dtype == DATA_TYPE
+        assert sdc3.shape == (WIDTH, SDC_HEIGHT)
+
         # .npz extension is added automatically
         file_without_ext = os.path.splitext(file)[0]
 
         np.savez_compressed(file_without_ext + '.fb', data=fb)
         np.savez_compressed(file_without_ext + '.mfcc', data=mfcc)
+        np.savez_compressed(file_without_ext + '.sdc2', data=sdc2)
+        np.savez_compressed(file_without_ext + '.sdc3', data=sdc3)
 
         if debug:
             end = time.time()
@@ -141,6 +164,8 @@ def process_audio(input_dir, debug=False):
             # data is casted to uint8, i.e. (0, 255)
             imageio.imwrite('fb_image.png', fb)
             imageio.imwrite('mfcc_image.png', mfcc)
+            imageio.imwrite('sdc2_image.png', sdc2)
+            imageio.imwrite('sdc3_image.png', sdc3)
 
             exit(0)
 

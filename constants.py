@@ -2,6 +2,7 @@ SEED = 42
 
 FB_HEIGHT = 40 # filter banks
 MFCC_HEIGHT = 12
+SDC_HEIGHT = 30
 WIDTH = 1000
 
 COLOR_DEPTH = 1

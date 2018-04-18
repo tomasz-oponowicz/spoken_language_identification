@@ -8,40 +8,7 @@ import time
 import numpy as np
 
 from constants import *
-
-def remove_extension(file):
-    return os.path.splitext(file)[0]
-
-
-def get_filename(file):
-    return os.path.basename(remove_extension(file))
-
-
-def group_uids(files):
-    uids = dict()
-
-    # intialize empty sets
-    for language in LANGUAGES:
-        uids[language] = dict()
-        for gender in GENDERS:
-            uids[language][gender] = set()
-
-    # extract uids and append to language/gender sets
-    for file in files:
-        info = get_filename(file).split('_')
-
-        language = info[0]
-        gender = info[1]
-        uid = info[2].split('.')[0]
-
-        uids[language][gender].add(uid)
-
-    # convert sets to lists
-    for language in LANGUAGES:
-        for gender in GENDERS:
-            uids[language][gender] = sorted(list(uids[language][gender]))
-
-    return uids
+import common
 
 def has_uids(uids):
     for language in LANGUAGES:
@@ -114,7 +81,7 @@ def generate_folds(input_dir, input_ext, output_dir, group, input_shape, normali
 
     files = glob(os.path.join(input_dir, '*' + input_ext))
 
-    uids = group_uids(files)
+    uids = common.group_uids(files)
 
     fold_index = 1
     while has_uids(uids):
