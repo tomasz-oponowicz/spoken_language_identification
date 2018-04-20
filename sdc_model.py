@@ -20,7 +20,7 @@ import common
 BASE_DIR = 'mfcc'
 
 # source: http://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html
-K = 12
+K = 13
 
 # covariance_type : {‘full’, ‘tied’, ‘diag’, ‘spherical’}
 COVARIANCE = 'spherical'
