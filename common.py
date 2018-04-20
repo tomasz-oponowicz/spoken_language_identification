@@ -9,6 +9,11 @@ import pandas as pd
 from sklearn import preprocessing
 from sklearn.metrics import classification_report
 
+def can_ignore(file, key):
+    if key in file:
+        return True
+    return False
+
 def flatten(binary_labels):
     return np.argmax(binary_labels, axis=1)
 

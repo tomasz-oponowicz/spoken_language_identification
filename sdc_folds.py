@@ -4,9 +4,13 @@ import time
 
 import numpy as np
 from sklearn.utils import shuffle
+import speechpy
 
 from constants import *
 import common
+
+HEIGHT = MFCC_HEIGHT * 2
+DTYPE = 'float64'
 
 def generate_folds(input_dir, input_langauge, input_ext, output_dir, output_group):
     if not os.path.exists(output_dir):
@@ -35,13 +39,6 @@ def has_uids(uids, language):
 
     return True
 
-def can_ignore(file, key, numbers):
-    for number in numbers:
-        if "{k}{n}".format(k=key, n=number) in file:
-            return True
-    return False
-
-
 def generate_fold(uids, input_dir, input_langauge, input_ext, output_dir, output_group, fold_index):
 
     # pull uid for each a gender pair
@@ -62,24 +59,22 @@ def generate_fold(uids, input_dir, input_langauge, input_ext, output_dir, output
 
     processed_files = 0
     for fold_file in fold_files:
-
-        # limit number of samples
-        if can_ignore(fold_file, 'speed', [1,3,6,8]):
-            continue
-        if can_ignore(fold_file, 'pitch', [1,3,6,8]):
-            continue
-        if can_ignore(fold_file, 'noise', [2,3,5,6,8,9,11,12]):
-            continue
-
         print(fold_file)
-
         processed_files += 1
 
         entries = np.load(fold_file)[DATA_KEY]
 
-        assert np.min(entries) >= 0. and np.max(entries) <= 1.
-        assert entries.shape == (WIDTH, SDC_HEIGHT)
-        assert entries.dtype == DATA_TYPE
+        # source: https://github.com/astorfi/speechpy/blob/master/speechpy/processing.py
+
+        # cepstral mean and variance normalization
+        entries = speechpy.processing.cmvn(entries, variance_normalization=True)
+
+        # deltas
+        deltas = speechpy.processing.derivative_extraction(entries, DeltaWindows=2)
+
+        entries = np.hstack((entries, deltas))
+
+        assert entries.dtype == DTYPE
 
         for entry in entries:
             features.append(entry)
@@ -94,8 +89,8 @@ def generate_fold(uids, input_dir, input_langauge, input_ext, output_dir, output
     features = np.array(features)
     print(features.shape)
 
-    assert features.shape == (processed_files * WIDTH, SDC_HEIGHT)
-    assert features.dtype == DATA_TYPE
+    assert features.shape == (processed_files * WIDTH, HEIGHT)
+    assert features.dtype == DTYPE
 
     np.savez_compressed(os.path.join(output_dir, filename), data=features)
 
@@ -108,13 +103,13 @@ if __name__ == "__main__":
     for language in LANGUAGES:
         generate_folds(
             './build/test',
-            input_langauge=language, input_ext='.sdc2.npz',
-            output_dir='sdc', output_group='test'
+            input_langauge=language, input_ext='.mfcc.npz',
+            output_dir='mfcc', output_group='test'
         )
         generate_folds(
             './build/train',
-            input_langauge=language, input_ext='.sdc2.npz',
-            output_dir='sdc', output_group='train'
+            input_langauge=language, input_ext='.mfcc.npz',
+            output_dir='mfcc', output_group='train'
         )
 
     end = time.time()
