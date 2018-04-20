@@ -44,7 +44,7 @@ es_train = np.concatenate(es_train);
 assert len(en_train) == len(de_train)
 assert len(de_train) == len(es_train)
 
-partial = int(0.1 * len(en_train))
+partial = int(0.5 * len(en_train))
 en_train = shuffle(en_train, random_state=SEED)[:partial]
 de_train = shuffle(de_train, random_state=SEED)[:partial]
 es_train = shuffle(es_train, random_state=SEED)[:partial]
