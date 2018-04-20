@@ -76,6 +76,8 @@ def generate_fold(uids, input_dir, input_langauge, input_ext, output_dir, output
         processed_files += 1
 
         entries = np.load(fold_file)[DATA_KEY]
+
+        assert np.min(entries) >= 0. and np.max(entries) <= 1.
         assert entries.shape == (WIDTH, SDC_HEIGHT)
         assert entries.dtype == DATA_TYPE
 

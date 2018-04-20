@@ -17,7 +17,7 @@ from sklearn.mixture import GaussianMixture
 from constants import *
 import common
 
-K = 128
+K = 8
 SAMPLE_LENGTH = 1000
 
 en_train = []
@@ -44,9 +44,9 @@ print(en_train.shape)
 print(de_train.shape)
 print(es_train.shape)
 
-en_gmm = GaussianMixture(n_components=K, covariance_type='diag')
-de_gmm = GaussianMixture(n_components=K, covariance_type='diag')
-es_gmm = GaussianMixture(n_components=K, covariance_type='diag')
+en_gmm = GaussianMixture(n_components=K, covariance_type='spherical')
+de_gmm = GaussianMixture(n_components=K, covariance_type='spherical')
+es_gmm = GaussianMixture(n_components=K, covariance_type='spherical')
 
 print("Train...")
 start = time.time()
@@ -74,7 +74,7 @@ for fold in range(1, 2):
 			begin = SAMPLE_LENGTH * i
 			end = SAMPLE_LENGTH * (i + 1)
 
-			sample = samples[begin:end,:]
+			sample = samples[begin:end:10]
 
 			scores = [
 				en_gmm.score(sample),
