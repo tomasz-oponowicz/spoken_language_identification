@@ -24,7 +24,9 @@ K = 13
 
 # covariance_type : {‘full’, ‘tied’, ‘diag’, ‘spherical’}
 COVARIANCE = 'spherical'
-REGULARIZATION = 1e-5
+REGULARIZATION = 1e-3
+TOLERANCE = 1e-3
+N_INIT = 1
 
 SAMPLE_LENGTH = 1000
 STEP = 10
@@ -55,9 +57,9 @@ print(en_train.shape)
 print(de_train.shape)
 print(es_train.shape)
 
-en_gmm = GaussianMixture(n_components=K, covariance_type=COVARIANCE, reg_covar=REGULARIZATION, random_state=SEED)
-de_gmm = GaussianMixture(n_components=K, covariance_type=COVARIANCE, reg_covar=REGULARIZATION, random_state=SEED)
-es_gmm = GaussianMixture(n_components=K, covariance_type=COVARIANCE, reg_covar=REGULARIZATION, random_state=SEED)
+en_gmm = GaussianMixture(n_components=K,  covariance_type=COVARIANCE, n_init=N_INIT, tol=TOLERANCE, reg_covar=REGULARIZATION, random_state=SEED)
+de_gmm = GaussianMixture(n_components=11, covariance_type=COVARIANCE, n_init=N_INIT, tol=TOLERANCE, reg_covar=REGULARIZATION, random_state=SEED)
+es_gmm = GaussianMixture(n_components=K,  covariance_type=COVARIANCE, n_init=N_INIT, tol=TOLERANCE, reg_covar=REGULARIZATION, random_state=SEED)
 
 print("Train...")
 start = time.time()
