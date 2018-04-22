@@ -110,7 +110,11 @@ for fold in range(12, 15):
 
             results = np.zeros(len(languages))
 
+            threshold = np.min(np.sum(np.abs(vectors), axis=1)) * 1.25
             for vector in vectors:
+                if np.sum(np.abs(vector)) < threshold:
+                    continue
+
                 vector = vector.reshape((1, 24))
 
                 scores = [
