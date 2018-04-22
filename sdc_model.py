@@ -76,7 +76,7 @@ print(es_train.shape)
 assert len(en_train) == len(de_train)
 assert len(de_train) == len(es_train)
 
-partial = int(0.1 * len(en_train))
+partial = int(0.5 * len(en_train))
 en_train = shuffle(en_train, random_state=SEED)[:partial]
 de_train = shuffle(de_train, random_state=SEED)[:partial]
 es_train = shuffle(es_train, random_state=SEED)[:partial]
@@ -85,11 +85,11 @@ print("Train...")
 start = time.time()
 
 print("==> en")
-en_gmm = bicGMMModelSelection(en_train, 20)
+en_gmm = bicGMMModelSelection(en_train, 64)
 print("==> de")
-de_gmm = bicGMMModelSelection(de_train, 20)
+de_gmm = bicGMMModelSelection(de_train, 68)
 print("==> es")
-es_gmm = bicGMMModelSelection(es_train, 20)
+es_gmm = bicGMMModelSelection(es_train, 64)
 
 end = time.time()
 print("It trained in [s]: ", end - start)
