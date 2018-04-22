@@ -76,6 +76,8 @@ def generate_fold(uids, input_dir, input_langauge, input_ext, output_dir, output
 
         assert entries.dtype == DTYPE
 
+        # assert entries.dtype == DATA_TYPE
+
         for entry in entries:
             features.append(entry)
 
@@ -91,6 +93,7 @@ def generate_fold(uids, input_dir, input_langauge, input_ext, output_dir, output
 
     assert features.shape == (processed_files * WIDTH, HEIGHT)
     assert features.dtype == DTYPE
+    # assert entries.dtype == DATA_TYPE
 
     np.savez_compressed(os.path.join(output_dir, filename), data=features)
 
