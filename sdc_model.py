@@ -97,7 +97,9 @@ print("It trained in [s]: ", end - start)
 print("Test...")
 start = time.time()
 
+accuracies = []
 languages = ['en', 'de', 'es']
+
 for fold in range(12, 15):
     for language_idx, language in enumerate(languages):
         file = "{0}/{1}_train.fold{2}.npz".format(BASE_DIR, language, fold)
@@ -132,7 +134,11 @@ for fold in range(12, 15):
                 correct_samples += 1
 
         accuracy = correct_samples / samples_count
+        accuracies.append(accuracy)
+
         print("{lang} acc: {acc:.2f}".format(lang=language, acc=accuracy))
+
+print("==> acc: {acc:.2f}".format(acc=np.mean(accuracies)))
 
 end = time.time()
 print("It tested in [s]: ", end - start)
