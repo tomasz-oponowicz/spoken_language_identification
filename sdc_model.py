@@ -22,7 +22,7 @@ BASE_DIR = 'mfcc'
 
 # source: http://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html
 # covariance_type : {‘full’, ‘tied’, ‘diag’, ‘spherical’}
-COVARIANCE = 'diag'
+COVARIANCE = 'spherical'
 REGULARIZATION = 1e-6
 TOLERANCE = 1e-3
 N_INIT = 1
@@ -67,7 +67,7 @@ print(es_train.shape)
 assert len(en_train) == len(de_train)
 assert len(de_train) == len(es_train)
 
-partial = int(0.6 * len(en_train))
+partial = int(0.75 * len(en_train))
 en_train = shuffle(en_train, random_state=SEED)[:partial]
 de_train = shuffle(de_train, random_state=SEED)[:partial]
 es_train = shuffle(es_train, random_state=SEED)[:partial]
@@ -76,11 +76,11 @@ print("Train...")
 start = time.time()
 
 print("==> en")
-en_gmm = train(en_train, 72, 'en_gmm_k=72_d=60%.pkl')
+en_gmm = train(en_train, 128, 'en_gmm_k=128_d=75%.pkl')
 print("==> de")
-de_gmm = train(de_train, 80, 'de_gmm_k=80_d=60%.pkl')
+de_gmm = train(de_train, 128, 'de_gmm_k=128_d=75%.pkl')
 print("==> es")
-es_gmm = train(es_train, 72, 'es_gmm_k=72_d=60%.pkl')
+es_gmm = train(es_train, 128, 'es_gmm_k=128_d=75%.pkl')
 
 end = time.time()
 print("It trained in [s]: ", end - start)
