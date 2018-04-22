@@ -110,7 +110,7 @@ for fold in range(12, 15):
 
             results = np.zeros(len(languages))
 
-            threshold = np.min(np.sum(np.abs(vectors), axis=1)) * 1.25
+            threshold = np.mean(np.sum(np.abs(vectors), axis=1)) * 0.4
             for vector in vectors:
                 if np.sum(np.abs(vector)) < threshold:
                     continue
