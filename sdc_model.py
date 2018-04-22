@@ -13,6 +13,7 @@ import time
 
 from sklearn.utils import shuffle
 from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
+from sklearn.externals import joblib
 
 from constants import *
 import common
@@ -29,33 +30,23 @@ N_INIT = 1
 SAMPLE_LENGTH = 1000
 STEP = 1
 
-def bicGMMModelSelection(X, k):
-    best_gmm = None
-    best_bic = np.infty
+def train(X, k, file):
+    if os.path.isfile(file):
+        return joblib.load(file)
 
-    for n_components in np.arange(k, k + 1):
-        gmm = GaussianMixture(
-            n_components=n_components,
-            covariance_type=COVARIANCE,
-            n_init=N_INIT,
-            tol=TOLERANCE,
-            reg_covar=REGULARIZATION,
-            random_state=SEED
-        )
+    gmm = GaussianMixture(
+        n_components=k,
+        covariance_type=COVARIANCE,
+        n_init=N_INIT,
+        tol=TOLERANCE,
+        reg_covar=REGULARIZATION,
+        random_state=SEED
+    )
 
-        gmm.fit(X)
-        bic = gmm.bic(X)
+    gmm.fit(X)
+    joblib.dump(gmm, file)
 
-        print("n_components: {0}, bic: {1:,.2f}".format(n_components, bic))
-
-        if bic < best_bic:
-            best_bic = bic
-            best_n_components = n_components
-            best_gmm = gmm
-
-    print('==> best_n_components:', best_n_components)
-
-    return best_gmm
+    return gmm
 
 en_train = []
 de_train = []
@@ -76,7 +67,7 @@ print(es_train.shape)
 assert len(en_train) == len(de_train)
 assert len(de_train) == len(es_train)
 
-partial = int(0.5 * len(en_train))
+partial = int(0.1 * len(en_train))
 en_train = shuffle(en_train, random_state=SEED)[:partial]
 de_train = shuffle(de_train, random_state=SEED)[:partial]
 es_train = shuffle(es_train, random_state=SEED)[:partial]
@@ -85,11 +76,11 @@ print("Train...")
 start = time.time()
 
 print("==> en")
-en_gmm = bicGMMModelSelection(en_train, 64)
+en_gmm = train(en_train, 10, 'en_gmm_k=10_d=10%.pkl')
 print("==> de")
-de_gmm = bicGMMModelSelection(de_train, 68)
+de_gmm = train(de_train, 10, 'de_gmm_k=10_d=10%.pkl')
 print("==> es")
-es_gmm = bicGMMModelSelection(es_train, 64)
+es_gmm = train(es_train, 10, 'es_gmm_k=10_d=10%.pkl')
 
 end = time.time()
 print("It trained in [s]: ", end - start)
