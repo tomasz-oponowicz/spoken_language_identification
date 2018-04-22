@@ -20,8 +20,6 @@ import common
 BASE_DIR = 'mfcc'
 
 # source: http://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html
-K = 40
-
 # covariance_type : {‘full’, ‘tied’, ‘diag’, ‘spherical’}
 COVARIANCE = 'diag'
 REGULARIZATION = 1e-6
@@ -29,7 +27,7 @@ TOLERANCE = 1e-3
 N_INIT = 1
 
 SAMPLE_LENGTH = 1000
-STEP = 10
+STEP = 1
 
 def bicGMMModelSelection(X, k):
     best_gmm = None
@@ -78,7 +76,7 @@ print(es_train.shape)
 assert len(en_train) == len(de_train)
 assert len(de_train) == len(es_train)
 
-partial = int(0.3 * len(en_train))
+partial = int(0.1 * len(en_train))
 en_train = shuffle(en_train, random_state=SEED)[:partial]
 de_train = shuffle(de_train, random_state=SEED)[:partial]
 es_train = shuffle(es_train, random_state=SEED)[:partial]
@@ -87,7 +85,7 @@ print("Train...")
 start = time.time()
 
 print("==> de")
-de_gmm = bicGMMModelSelection(de_train, 25)
+de_gmm = bicGMMModelSelection(de_train, 30)
 print("==> es")
 es_gmm = bicGMMModelSelection(es_train, 30)
 
@@ -97,42 +95,43 @@ print("It trained in [s]: ", end - start)
 print("Test...")
 start = time.time()
 
+languages = ['de', 'es']
 for fold in range(12, 15):
-    accuracies = []
-
-    for language_idx, language in enumerate(['de', 'es']):
+    for language_idx, language in enumerate(languages):
         file = "{0}/{1}_train.fold{2}.npz".format(BASE_DIR, language, fold)
 
         samples = np.load(file)[DATA_KEY]
 
-        correct = 0
-        size = int(len(samples) / SAMPLE_LENGTH)
+        correct_samples = 0
+        samples_count = int(len(samples) / SAMPLE_LENGTH)
 
-        print(file, samples.shape, size, language_idx)
+        # print(file, samples.shape, samples_count, language_idx)
 
-        for i in range(0, size):
-            begin = SAMPLE_LENGTH * i
-            end = SAMPLE_LENGTH * (i + 1)
+        for sample_idx in range(0, samples_count):
+            begin = SAMPLE_LENGTH * sample_idx
+            end = begin + SAMPLE_LENGTH
 
-            sample = samples[begin:end:STEP]
+            vectors = samples[begin:end:STEP]
 
-            scores = [
-                # en_gmm.score(sample),
-                # np.mean(np.max(de_gmm.predict_proba(sample), axis=1)),
-                # np.mean(np.max(es_gmm.predict_proba(sample), axis=1))
-                np.max(de_gmm.score_samples(sample)),
-                np.max(es_gmm.score_samples(sample))
-            ]
+            correct_vectors = 0
+            vectors_count = len(vectors)
 
-            if np.argmax(scores) == language_idx:
-                correct += 1
+            for vector in vectors:
+                vector = vector.reshape((1, 24))
 
-        accuracy = correct / size
-        accuracies.append(accuracy)
+                scores = [
+                    np.max(de_gmm.score_samples(vector)),
+                    np.max(es_gmm.score_samples(vector))
+                ]
 
+                if np.argmax(scores) == language_idx:
+                    correct_vectors += 1
+
+            if (correct_vectors / vectors_count) > 0.5:
+                correct_samples += 1
+
+        accuracy = correct_samples / samples_count
         print("{lang} acc: {acc:.2f}".format(lang=language, acc=accuracy))
-
-    print("==> fold{fold} acc: {acc:.2f}".format(fold=fold, acc=np.mean(accuracies)))
 
 end = time.time()
 print("It tested in [s]: ", end - start)
