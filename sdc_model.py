@@ -22,7 +22,7 @@ BASE_DIR = 'mfcc'
 
 # source: http://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html
 # covariance_type : {‘full’, ‘tied’, ‘diag’, ‘spherical’}
-COVARIANCE = 'spherical'
+COVARIANCE = 'diag'
 REGULARIZATION = 1e-6
 TOLERANCE = 1e-3
 N_INIT = 1
@@ -76,11 +76,11 @@ print("Train...")
 start = time.time()
 
 print("==> en")
-en_gmm = train(en_train, 128, 'en_gmm_k=128_d=75%.pkl')
+en_gmm = train(en_train, 128, 'en_gmm_k=128_d=75%_diag.pkl')
 print("==> de")
-de_gmm = train(de_train, 128, 'de_gmm_k=128_d=75%.pkl')
+de_gmm = train(de_train, 128, 'de_gmm_k=128_d=75%_diag.pkl')
 print("==> es")
-es_gmm = train(es_train, 128, 'es_gmm_k=128_d=75%.pkl')
+es_gmm = train(es_train, 128, 'es_gmm_k=128_d=75%_diag.pkl')
 
 end = time.time()
 print("It trained in [s]: ", end - start)
