@@ -8,4 +8,5 @@ __pycache__
 *.png
 *.h5
 *.pkl
+results
 logs

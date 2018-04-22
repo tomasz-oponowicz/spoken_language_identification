@@ -67,7 +67,7 @@ print(es_train.shape)
 assert len(en_train) == len(de_train)
 assert len(de_train) == len(es_train)
 
-partial = int(0.1 * len(en_train))
+partial = int(0.6 * len(en_train))
 en_train = shuffle(en_train, random_state=SEED)[:partial]
 de_train = shuffle(de_train, random_state=SEED)[:partial]
 es_train = shuffle(es_train, random_state=SEED)[:partial]
@@ -76,11 +76,11 @@ print("Train...")
 start = time.time()
 
 print("==> en")
-en_gmm = train(en_train, 10, 'en_gmm_k=10_d=10%.pkl')
+en_gmm = train(en_train, 72, 'en_gmm_k=72_d=60%.pkl')
 print("==> de")
-de_gmm = train(de_train, 10, 'de_gmm_k=10_d=10%.pkl')
+de_gmm = train(de_train, 80, 'de_gmm_k=80_d=60%.pkl')
 print("==> es")
-es_gmm = train(es_train, 10, 'es_gmm_k=10_d=10%.pkl')
+es_gmm = train(es_train, 72, 'es_gmm_k=72_d=60%.pkl')
 
 end = time.time()
 print("It trained in [s]: ", end - start)
