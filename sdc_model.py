@@ -44,7 +44,7 @@ def bicGMMModelSelection(X, k):
         )
 
         gmm.fit(X)
-        bic = gmm.aic(X)
+        bic = gmm.bic(X)
 
         print("n_components: {0}, bic: {1:,.2f}".format(n_components, bic))
 
@@ -76,7 +76,7 @@ print(es_train.shape)
 assert len(en_train) == len(de_train)
 assert len(de_train) == len(es_train)
 
-partial = int(0.1 * len(en_train))
+partial = int(0.2 * len(en_train))
 en_train = shuffle(en_train, random_state=SEED)[:partial]
 de_train = shuffle(de_train, random_state=SEED)[:partial]
 es_train = shuffle(es_train, random_state=SEED)[:partial]
@@ -84,10 +84,12 @@ es_train = shuffle(es_train, random_state=SEED)[:partial]
 print("Train...")
 start = time.time()
 
+print("==> en")
+en_gmm = bicGMMModelSelection(en_train, 20)
 print("==> de")
-de_gmm = bicGMMModelSelection(de_train, 30)
+de_gmm = bicGMMModelSelection(de_train, 20)
 print("==> es")
-es_gmm = bicGMMModelSelection(es_train, 30)
+es_gmm = bicGMMModelSelection(es_train, 20)
 
 end = time.time()
 print("It trained in [s]: ", end - start)
@@ -95,7 +97,7 @@ print("It trained in [s]: ", end - start)
 print("Test...")
 start = time.time()
 
-languages = ['de', 'es']
+languages = ['en', 'de', 'es']
 for fold in range(12, 15):
     for language_idx, language in enumerate(languages):
         file = "{0}/{1}_train.fold{2}.npz".format(BASE_DIR, language, fold)
@@ -113,21 +115,20 @@ for fold in range(12, 15):
 
             vectors = samples[begin:end:STEP]
 
-            correct_vectors = 0
-            vectors_count = len(vectors)
+            results = np.zeros(len(languages))
 
             for vector in vectors:
                 vector = vector.reshape((1, 24))
 
                 scores = [
+                    np.max(en_gmm.score_samples(vector)),
                     np.max(de_gmm.score_samples(vector)),
                     np.max(es_gmm.score_samples(vector))
                 ]
 
-                if np.argmax(scores) == language_idx:
-                    correct_vectors += 1
+                results[np.argmax(scores)] += 1
 
-            if (correct_vectors / vectors_count) > 0.5:
+            if np.argmax(results) == language_idx:
                 correct_samples += 1
 
         accuracy = correct_samples / samples_count
