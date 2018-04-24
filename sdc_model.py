@@ -30,6 +30,10 @@ N_INIT = 1
 SAMPLE_LENGTH = 1000
 STEP = 1
 
+K = 256
+P = 1
+V = 3
+
 def train(X, k, file):
     if os.path.isfile(file):
         return joblib.load(file)
@@ -48,6 +52,20 @@ def train(X, k, file):
 
     return gmm
 
+def remove_silence(X):
+    s = np.sum(np.abs(X), axis=1)
+    t = np.mean(s) * 0.5
+    return X[np.where(s > t)]
+
+def build_filename(language):
+    return "{l}_gmm_n={n}_p={p}_t={t}_v={v}.pkl".format(
+        l=language,
+        n=K,
+        p=int(P * 100),
+        t=COVARIANCE,
+        v=V
+    )
+
 en_train = []
 de_train = []
 es_train = []
@@ -56,9 +74,20 @@ for i in [1,2,3,4,5,6,7,9,10,11]:
     de_train.append(np.load("{0}/de_train.fold{1}.npz".format(BASE_DIR, i))[DATA_KEY])
     es_train.append(np.load("{0}/es_train.fold{1}.npz".format(BASE_DIR, i))[DATA_KEY])
 
-en_train = np.concatenate(en_train);
-de_train = np.concatenate(de_train);
-es_train = np.concatenate(es_train);
+en_train = np.concatenate(en_train)
+de_train = np.concatenate(de_train)
+es_train = np.concatenate(es_train)
+
+# en_train = remove_silence(en_train)
+# de_train = remove_silence(de_train)
+# es_train = remove_silence(es_train)
+
+size = np.min((len(en_train), len(de_train), len(es_train)))
+percent = int(P * size)
+
+en_train = shuffle(en_train, random_state=SEED)[:percent]
+de_train = shuffle(de_train, random_state=SEED)[:percent]
+es_train = shuffle(es_train, random_state=SEED)[:percent]
 
 print(en_train.shape)
 print(de_train.shape)
@@ -67,20 +96,15 @@ print(es_train.shape)
 assert len(en_train) == len(de_train)
 assert len(de_train) == len(es_train)
 
-partial = int(0.75 * len(en_train))
-en_train = shuffle(en_train, random_state=SEED)[:partial]
-de_train = shuffle(de_train, random_state=SEED)[:partial]
-es_train = shuffle(es_train, random_state=SEED)[:partial]
-
 print("Train...")
 start = time.time()
 
 print("==> en")
-en_gmm = train(en_train, 128, 'en_gmm_k=128_d=75%_diag.pkl')
+en_gmm = train(en_train, K, build_filename('en'))
 print("==> de")
-de_gmm = train(de_train, 128, 'de_gmm_k=128_d=75%_diag.pkl')
+de_gmm = train(de_train, K, build_filename('de'))
 print("==> es")
-es_gmm = train(es_train, 128, 'es_gmm_k=128_d=75%_diag.pkl')
+es_gmm = train(es_train, K, build_filename('es'))
 
 end = time.time()
 print("It trained in [s]: ", end - start)
@@ -107,23 +131,15 @@ for fold in range(12, 15):
             end = begin + SAMPLE_LENGTH
 
             vectors = samples[begin:end:STEP]
+            # vectors = remove_silence(vectors)
 
             results = np.zeros(len(languages))
-
-            threshold = np.mean(np.sum(np.abs(vectors), axis=1)) * 0.4
             for vector in vectors:
-                if np.sum(np.abs(vector)) < threshold:
-                    continue
-
                 vector = vector.reshape((1, 24))
 
-                scores = [
-                    np.max(en_gmm.score_samples(vector)),
-                    np.max(de_gmm.score_samples(vector)),
-                    np.max(es_gmm.score_samples(vector))
-                ]
-
-                results[np.argmax(scores)] += 1
+                results[0] += en_gmm.score_samples(vector)
+                results[1] += de_gmm.score_samples(vector)
+                results[2] += es_gmm.score_samples(vector)
 
             if np.argmax(results) == language_idx:
                 correct_samples += 1
