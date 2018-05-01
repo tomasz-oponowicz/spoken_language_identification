@@ -51,7 +51,7 @@ def generate_fold(uids, input_dir, input_ext, output_dir, group, fold_index, inp
     for index, fold_file in enumerate(fold_files):
         print(fold_file)
 
-        filename = get_filename(fold_file)
+        filename = common.get_filename(fold_file)
         language = filename.split('_')[0]
         gender = filename.split('_')[1]
 
@@ -116,8 +116,6 @@ def normalize_fb(spectrogram):
 
     return normalized
 
-normalize_mfcc = normalize_fb
-
 if __name__ == "__main__":
     start = time.time()
 
@@ -135,22 +133,6 @@ if __name__ == "__main__":
         input_shape=(WIDTH, FB_HEIGHT),
         normalize=normalize_fb,
         output_shape=(FB_HEIGHT, WIDTH, COLOR_DEPTH)
-    )
-
-    # mfcc
-    generate_folds(
-        './build/test', '.mfcc.npz',
-        output_dir='mfcc', group='test',
-        input_shape=(WIDTH, MFCC_HEIGHT),
-        normalize=normalize_mfcc,
-        output_shape=(MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
-    )
-    generate_folds(
-        './build/train', '.mfcc.npz',
-        output_dir='mfcc', group='train',
-        input_shape=(WIDTH, MFCC_HEIGHT),
-        normalize=normalize_mfcc,
-        output_shape=(MFCC_HEIGHT, WIDTH, COLOR_DEPTH)
     )
 
     end = time.time()

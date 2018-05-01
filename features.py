@@ -88,18 +88,18 @@ def generate_fb_and_mfcc(signal, sample_rate):
     filter_banks = 20 * np.log10(filter_banks)
 
     # MFCCs
-    num_ceps = 12
-    cep_lifter = 22
+    # num_ceps = 12
+    # cep_lifter = 22
 
-    ### Keep 2-13
-    mfcc = dct(filter_banks, type=2, axis=1, norm='ortho')[:, 1 : (num_ceps + 1)]
+    # ### Keep 2-13
+    # mfcc = dct(filter_banks, type=2, axis=1, norm='ortho')[:, 1 : (num_ceps + 1)]
 
-    (nframes, ncoeff) = mfcc.shape
-    n = np.arange(ncoeff)
-    lift = 1 + (cep_lifter / 2) * np.sin(np.pi * n / cep_lifter)
-    mfcc *= lift
+    # (nframes, ncoeff) = mfcc.shape
+    # n = np.arange(ncoeff)
+    # lift = 1 + (cep_lifter / 2) * np.sin(np.pi * n / cep_lifter)
+    # mfcc *= lift
 
-    return filter_banks, mfcc
+    return filter_banks
 
 def process_audio(input_dir, debug=False):
     files = []
@@ -109,39 +109,26 @@ def process_audio(input_dir, debug=False):
         files.extend(glob.glob(os.path.join(input_dir, extension)))
 
     for file in files:
-        # limit number of samples
-        if common.can_ignore(file, 'speed'):
-            continue
-        if common.can_ignore(file, 'pitch'):
-            continue
-        if common.can_ignore(file, 'noise'):
-            continue
-
-        print(file)
-
         if debug:
             file = 'build/test/de_f_63f5b79c76cf5a1a4bbd1c40f54b166e.fragment1.flac'
             start = time.time()
+
+        print(file)
 
         signal, sample_rate = sf.read(file)
         assert len(signal) > 0
         assert sample_rate == 22050
 
-        fb, mfcc = generate_fb_and_mfcc(signal, sample_rate)
-
+        fb = generate_fb_and_mfcc(signal, sample_rate)
         fb = fb.astype(DATA_TYPE, copy=False)
-        mfcc = mfcc.astype(DATA_TYPE, copy=False)
 
         assert fb.dtype == DATA_TYPE
-        assert mfcc.dtype == DATA_TYPE
         assert fb.shape == (WIDTH, FB_HEIGHT)
-        assert mfcc.shape == (WIDTH, MFCC_HEIGHT)
 
         # .npz extension is added automatically
         file_without_ext = os.path.splitext(file)[0]
 
         np.savez_compressed(file_without_ext + '.fb', data=fb)
-        np.savez_compressed(file_without_ext + '.mfcc', data=mfcc)
 
         if debug:
             end = time.time()
@@ -149,7 +136,6 @@ def process_audio(input_dir, debug=False):
 
             # data is casted to uint8, i.e. (0, 255)
             imageio.imwrite('fb_image.png', fb)
-            imageio.imwrite('mfcc_image.png', mfcc)
 
             exit(0)
 
