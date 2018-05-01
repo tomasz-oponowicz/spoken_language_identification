@@ -6,6 +6,7 @@ from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 import time
 import numpy as np
+import speechpy
 
 from constants import *
 import common
@@ -97,8 +98,8 @@ def generate_folds(input_dir, input_ext, output_dir, group, input_shape, normali
 
 def normalize_fb(spectrogram):
 
-    # Mean Normalization
-    spectrogram -= (np.mean(spectrogram, axis=0) + 1e-8)
+    # Mean and Variance Normalization
+    spectrogram = speechpy.processing.cmvn(spectrogram, variance_normalization=True)
 
     # MinMax Scaler, scale values between (0,1)
     normalized = (spectrogram - np.min(spectrogram)) / (np.max(spectrogram) - np.min(spectrogram))
