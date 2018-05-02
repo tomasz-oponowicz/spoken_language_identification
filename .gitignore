@@ -10,3 +10,5 @@ __pycache__
 *.pkl
 results
 logs
+*.mp3
+.temp
