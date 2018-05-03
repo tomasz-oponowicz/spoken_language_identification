@@ -10,9 +10,6 @@ build
 # model
 model.h5
 
-# cli.py temporary dir
-.temp
-
 # features
 fb
 

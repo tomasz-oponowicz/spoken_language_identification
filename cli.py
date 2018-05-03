@@ -1,9 +1,9 @@
 import os
-from glob import glob
+import glob
 import shutil
+import tempfile
 
 import numpy as np
-from keras.models import load_model
 
 import common
 import features
@@ -11,70 +11,121 @@ import folds
 from audio_toolbox import ffmpeg, sox
 from constants import *
 
-MODEL_FILE = 'model.f1_95.h5'
-FRAGMENT_DURATION = 10
-INPUT_SHAPE = (FB_HEIGHT, WIDTH, COLOR_DEPTH)
+def normalize(input_file):
+    temp_dir = tempfile.mkdtemp()
 
-input_file = 'KDP-Episode-005.mp3'
+    transcoded_file = os.path.join(temp_dir, 'transcoded.flac')
+    ffmpeg.transcode(input_file, transcoded_file)
 
-# normalize input
+    if not args.keep_silence:
+        trimmed_file = os.path.join(temp_dir, 'trimmed.flac')
+        sox.remove_silence(transcoded_file, trimmed_file,
+            min_duration_sec=args.silence_min_duration_sec,
+            threshold=args.silence_threshold)
+    else:
+        trimmed_file = transcoded_file
 
-output_dir = '.temp'
-transcoded_file = os.path.join(output_dir, 'test.transcoded.flac')
-normalized_file = os.path.join(output_dir, 'test.normalized.flac')
-trimmed_file = os.path.join(output_dir, 'test.trimmed.flac')
-fragment_file = os.path.join(output_dir, 'test.fragment@n.flac')
+    duration = sox.get_duration(trimmed_file)
+    duration = int((duration // FRAGMENT_DURATION) * FRAGMENT_DURATION)
 
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
+    normalized_file = os.path.join(temp_dir, 'normalized.flac')
+    sox.normalize(trimmed_file, normalized_file, duration_in_sec=duration)
 
-ffmpeg.transcode(input_file, transcoded_file)
+    return normalized_file, temp_dir
 
-sox.remove_silence(transcoded_file, trimmed_file)
+def load_samples(normalized_file):
+    temp_dir = tempfile.mkdtemp()
 
-duration = sox.get_duration(trimmed_file)
-duration = int((duration // FRAGMENT_DURATION) * FRAGMENT_DURATION)
-sox.normalize(trimmed_file, normalized_file, duration_in_sec=duration)
+    fragmented_file = os.path.join(temp_dir, 'fragment@n.flac')
+    sox.split(normalized_file, fragmented_file, FRAGMENT_DURATION)
 
-sox.split(normalized_file, fragment_file, FRAGMENT_DURATION)
+    features.process_audio(temp_dir)
 
-os.remove(transcoded_file)
-os.remove(normalized_file)
-os.remove(trimmed_file)
+    samples = []
+    for file in glob.glob(os.path.join(temp_dir, '*.npz')):
+        sample = np.load(file)[DATA_KEY]
+        sample = folds.normalize_fb(sample)
 
-# generate features
+        assert sample.shape == INPUT_SHAPE
+        assert sample.dtype == DATA_TYPE
 
-features.process_audio(output_dir)
+        samples.append(sample)
 
-samples = []
+    samples = np.array(samples)
 
-files = glob(os.path.join(output_dir, '*.npz'))
-for file in files:
-    sample = np.load(file)[DATA_KEY]
-    sample = folds.normalize_fb(sample)
+    return samples, temp_dir
 
-    assert sample.shape == INPUT_SHAPE
-    assert sample.dtype == DATA_TYPE
+def predict(model_file):
+    import keras.models
 
-    samples.append(sample)
+    _, languages = common.build_label_binarizer()
 
-samples = np.array(samples)
-# shutil.rmtree(output_dir)
+    model = keras.models.load_model(model_file)
+    results = model.predict(samples)
 
-# predict language
+    scores = np.zeros(len(languages))
+    for result in results:
+        scores[np.argmax(result)] += 1
 
-label_binarizer, clazzes = common.build_label_binarizer()
-model = load_model(MODEL_FILE)
+    return scores, languages
 
-results = model.predict(samples)
+def clean(paths):
+    for path in paths:
+        shutil.rmtree(path)
 
-counters = np.zeros(len(LANGUAGES))
-for result in results:
-	counters[np.argmax(result)] += 1
+if __name__ == "__main__":
+    import argparse
 
-language_idx = np.argmax(counters)
-confidence = counters[language_idx] / np.sum(counters)
+    parser = argparse.ArgumentParser(description='Test the model.')
+    parser.add_argument('input',
+        help='a path to an audio file')
+    parser.add_argument('--model', dest='model',
+        help='a path to the H5 model file; the default is `model.h5`')
+    parser.add_argument('--silence-threshold', dest='silence_threshold', type=float,
+        help="indicates what sample value you should treat as silence; the default is `0.5`")
+    parser.add_argument('--silence-min-duration', dest='silence_min_duration_sec', type=float,
+        help="specifies a period of silence that must exist before audio is " +
+             "not copied any more; the default is `0.1`")
+    parser.add_argument('--keep-silence', dest='keep_silence', action='store_true',
+        help='don\'t remove silence from samples')
+    parser.add_argument('--keep-temp-files', dest='keep_temp_files', action='store_true',
+        help='don\'t remove temporary files when done')
+    parser.add_argument('--verbose', dest='verbose', action='store_true',
+        help='print more logs')
 
-print('Counters:', counters)
-print('Language:', clazzes[language_idx])
-print('Confidence:', confidence)
+    parser.set_defaults(
+        model='model.h5',
+        keep_silence=False,
+        silence_min_duration_sec=0.1,
+        silence_threshold=0.5,
+        keep_temp_files=False,
+        verbose=False
+    )
+
+    args = parser.parse_args()
+
+    if not args.verbose:
+
+        # supress all warnings
+        import warnings
+        warnings.filterwarnings("ignore")
+
+        # supress tensorflow warnings
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+    normalized_file, normalized_dir = normalize(args.input)
+    samples, samples_dir = load_samples(normalized_file)
+
+    if not args.keep_temp_files:
+        clean((normalized_dir, samples_dir))
+
+    scores, languages = predict(args.model)
+
+    total = np.sum(scores)
+    for language_idx, language in enumerate(languages):
+        score = scores[language_idx]
+        print("{language}: {percent:.2f}% ({amount:.0f})".format(
+            language=language,
+            percent=(score / total) * 100,
+            amount=score
+        ))

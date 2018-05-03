@@ -3,9 +3,7 @@ from glob import glob
 import os
 import numpy as np
 from sklearn.utils import shuffle
-import matplotlib.pyplot as plt
 import time
-import numpy as np
 import speechpy
 
 from constants import *

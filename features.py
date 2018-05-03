@@ -2,11 +2,8 @@ import glob
 import os
 import time
 
-import imageio
 import numpy as np
 import soundfile as sf
-import librosa as lr
-from scipy.fftpack import dct
 
 from constants import *
 import common
@@ -135,6 +132,7 @@ def process_audio(input_dir, debug=False):
             print("It took [s]: ", end - start)
 
             # data is casted to uint8, i.e. (0, 255)
+            import imageio
             imageio.imwrite('fb_image.png', fb)
 
             exit(0)
