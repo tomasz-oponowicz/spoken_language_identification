@@ -7,9 +7,6 @@ build
 # charts
 *.png
 
-# model
-model.h5
-
 # features
 fb
 
