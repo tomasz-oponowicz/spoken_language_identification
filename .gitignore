@@ -1,14 +1,23 @@
-.env/
-.idea/
+# virtual environment
+.env
+
+# dataset
 build
-*.out
-__pycache__
-*.npz
-*.npy
+
+# charts
 *.png
-*.h5
-*.pkl
-results
-logs
-*.mp3
+
+# model
+model.h5
+
+# cli.py temporary dir
 .temp
+
+# features
+fb
+
+# sublime
+*.sublime-workspace
+
+# python
+__pycache__
