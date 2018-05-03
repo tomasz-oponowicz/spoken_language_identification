@@ -3,8 +3,8 @@
 	[
 		{
 			"path": ".",
-			"folder_exclude_patterns": [".temp", "fb"],
-			"file_exclude_patterns": ["*.mp3", "*.flac"]
+			"folder_exclude_patterns": ["fb"],
+			"file_exclude_patterns": ["*.mp3"]
 		}
 	]
 }
