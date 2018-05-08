@@ -4,6 +4,10 @@ Analyze audio to identify a language.
 The solution uses the CNN network in order to detect language specific phonems.
 It supports 3 languages: English, German and Spanish.
 
+## Performance
+
+The score against the test set (out-of-sample) is 97% (F1 score). Additionally the network generalizes well and presents high score against random speech samples, for example podcasts or audiobooks.
+
 ## Demo
 
 TODO dockerize
