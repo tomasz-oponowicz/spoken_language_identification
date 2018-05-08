@@ -1,6 +1,6 @@
 absl-py==0.2.0
 astor==0.6.2
--e git+git@bitbucket.org:tomasz_oponowicz/audio_toolbox.git@0e4cc91b5c7f5a92c8fd4c1427100b3913104860#egg=audio_toolbox
+audio-toolbox==0.1
 bleach==1.5.0
 cffi==1.11.5
 gast==0.2.0
