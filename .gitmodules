@@ -1,0 +1,3 @@
+[submodule "spoken_language_dataset"]
+	path = spoken_language_dataset
+	url = https://github.com/tomasz-oponowicz/spoken_language_dataset
