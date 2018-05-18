@@ -20,7 +20,7 @@ The score against the test set (out-of-sample) is 97% (F1 score). Additionally t
           $ wget "https://s102.podbean.com/pb/e19e826a5c0e755683b154195e22127a/5afe956e/data1/fs145/862611/uploads/039_jsAir_-_Node_js_and_Community.mp3" -O en.mp3
     * German
     
-          $ wget "http://1m40ti5.podcaster.de/Ernaehrungspsychologie/media/052_Am_Arsch_vorbei_geht_auch_ein_Weg.mp3" -O de.mp3
+          $ wget "http://mp3-download.ard.de/radio/radiofeature/auf-die-fresse-xa9c.l.mp3" -O de.mp3
 1. Build docker image:
 
        $ docker build -t sli --rm https://github.com/tomasz-oponowicz/spoken_language_identification.git
