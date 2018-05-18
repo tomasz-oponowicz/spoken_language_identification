@@ -17,10 +17,10 @@ The score against the test set (out-of-sample) is 97% (F1 score). Additionally t
     > NOTE: An audio file should contain speech and silence only. For example podcasts, interviews or audiobooks are a good fit. Sound effects or languages other than English, German or Spanish may be badly classified.
     * English
     
-          $ wget "https://s65.podbean.com/pb/849e5f8163a122e57e7b8a0ee9a38868/5afe934a/data2/fs145/862611/uploads/046_JavaScript_Air_-_React_Native.mp3" -O en.mp3
+          $ wget "https://s102.podbean.com/pb/e19e826a5c0e755683b154195e22127a/5afe956e/data1/fs145/862611/uploads/039_jsAir_-_Node_js_and_Community.mp3" -O en.mp3
 1. Build docker image:
 
-       $ docker build https://github.com/tomasz-oponowicz/spoken_language_identification.git
+       $ docker build -t sli --rm https://github.com/tomasz-oponowicz/spoken_language_identification.git
 1. Mount the `examples` directory and classify an audio file, for example:
 
        $ docker run --rm -it -v $(pwd):/data sli /data/en.mp3
