@@ -6,7 +6,7 @@ It supports 3 languages: English, German and Spanish.
 
 ## Performance
 
-The score against the test set (out-of-sample) is 97% (F1 score). Additionally the network generalizes well and presents high score against real life content, for example podcasts or TV news.
+The score against the test set (out-of-sample) is 97% (F1 metric). Additionally the network generalizes well and presents high score against real life content, for example podcasts or TV news.
 
 ## Demo
 
