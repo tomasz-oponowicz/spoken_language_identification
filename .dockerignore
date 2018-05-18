@@ -1,0 +1,7 @@
+# ignore everything
+**/*
+
+# whitelist
+!*.py
+!model.h5
+!requirements.txt
