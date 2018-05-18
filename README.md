@@ -21,6 +21,9 @@ The score against the test set (out-of-sample) is 97% (F1 score). Additionally t
     * German
     
           $ wget "http://mp3-download.ard.de/radio/radiofeature/auf-die-fresse-xa9c.l.mp3" -O de.mp3
+    * Spanish
+    
+          $ wget "http://mvod.lvlt.rtve.es/resources/TE_SCINCOC/mp3/2/8/1526585716282.mp3" -O es.mp3
 1. Build docker image:
 
        $ docker build -t sli --rm https://github.com/tomasz-oponowicz/spoken_language_identification.git
