@@ -8,15 +8,22 @@ It supports 3 languages: English, German and Spanish.
 
 The score against the test set (out-of-sample) is 97% (F1 score). Additionally the network generalizes well and presents high score against random speech samples, for example podcasts or audiobooks.
 
-## Test
+## Demo
 
-1. Install dependencies:
+1. Create a temporary directory and change directory:
 
-       $ pip install -r requirements.txt
-1. Classify audio file
+       $ mkdir examples && cd $_
+1. Download samples:
+    > NOTE: An audio file should contain speech and silence only. For example podcasts, interviews or audiobooks are a good fit. Sound effects or languages other than English, German or Spanish may be badly classified.
+    * English
+    
+          $ wget "https://s65.podbean.com/pb/849e5f8163a122e57e7b8a0ee9a38868/5afe934a/data2/fs145/862611/uploads/046_JavaScript_Air_-_React_Native.mp3" -O en.mp3
+1. Build docker image:
 
-       $ python cli.py foo.mp3
-    ...an audio file should contain speech and silence. For example podcasts, interviews or audiobooks are good fit. Sound effects or languages other than English, German or Spanish may be badly classified.
+       $ docker build https://github.com/tomasz-oponowicz/spoken_language_identification.git
+1. Mount the `examples` directory and classify an audio file, for example:
+
+       $ docker run --rm -it -v $(pwd):/data sli /data/en.mp3
 
 ## Train
 
