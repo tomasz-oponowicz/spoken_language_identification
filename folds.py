@@ -9,6 +9,7 @@ import speechpy
 from constants import *
 import common
 
+
 def has_uids(uids):
     for language in LANGUAGES:
         for gender in GENDERS:
@@ -18,7 +19,16 @@ def has_uids(uids):
     return True
 
 
-def generate_fold(uids, input_dir, input_ext, output_dir, group, fold_index, input_shape, normalize, output_shape):
+def generate_fold(
+        uids,
+        input_dir,
+        input_ext,
+        output_dir,
+        group,
+        fold_index,
+        input_shape,
+        normalize,
+        output_shape):
 
     # pull uid for each a language, gender pair
     fold_uids = []
@@ -29,7 +39,8 @@ def generate_fold(uids, input_dir, input_ext, output_dir, group, fold_index, inp
     # find files for given uids
     fold_files = []
     for fold_uid in fold_uids:
-        filename = '*{uid}*{extension}'.format(uid=fold_uid, extension=input_ext)
+        filename = '*{uid}*{extension}'.format(
+            uid=fold_uid, extension=input_ext)
         fold_files.extend(glob(os.path.join(input_dir, filename)))
 
     fold_files = sorted(fold_files)
@@ -38,7 +49,8 @@ def generate_fold(uids, input_dir, input_ext, output_dir, group, fold_index, inp
     metadata = []
 
     # create a file array
-    filename = "{group}_data.fold{index}.npy".format(group=group, index=fold_index)
+    filename = "{group}_data.fold{index}.npy".format(
+        group=group, index=fold_index)
     features = np.memmap(
         os.path.join(output_dir, filename),
         dtype=DATA_TYPE, mode='w+',
@@ -64,7 +76,8 @@ def generate_fold(uids, input_dir, input_ext, output_dir, group, fold_index, inp
     assert len(metadata) == len(fold_files)
 
     # store metadata in a file
-    filename = "{group}_metadata.fold{index}.npy".format(group=group, index=fold_index)
+    filename = "{group}_metadata.fold{index}.npy".format(
+        group=group, index=fold_index)
     np.save(
         os.path.join(output_dir, filename),
         metadata
@@ -74,7 +87,15 @@ def generate_fold(uids, input_dir, input_ext, output_dir, group, fold_index, inp
     features.flush()
     del features
 
-def generate_folds(input_dir, input_ext, output_dir, group, input_shape, normalize, output_shape):
+
+def generate_folds(
+        input_dir,
+        input_ext,
+        output_dir,
+        group,
+        input_shape,
+        normalize,
+        output_shape):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -94,13 +115,16 @@ def generate_folds(input_dir, input_ext, output_dir, group, input_shape, normali
 
         fold_index += 1
 
+
 def normalize_fb(spectrogram):
 
     # Mean and Variance Normalization
-    spectrogram = speechpy.processing.cmvn(spectrogram, variance_normalization=True)
+    spectrogram = speechpy.processing.cmvn(
+        spectrogram, variance_normalization=True)
 
     # MinMax Scaler, scale values between (0,1)
-    normalized = (spectrogram - np.min(spectrogram)) / (np.max(spectrogram) - np.min(spectrogram))
+    normalized = (spectrogram - np.min(spectrogram)) / \
+        (np.max(spectrogram) - np.min(spectrogram))
 
     # Rotate 90deg
     normalized = np.swapaxes(normalized, 0, 1)
@@ -114,6 +138,7 @@ def normalize_fb(spectrogram):
     assert np.min(normalized) == 0.0
 
     return normalized
+
 
 if __name__ == "__main__":
     start = time.time()

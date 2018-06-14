@@ -11,6 +11,7 @@ import folds
 from audio_toolbox import ffmpeg, sox
 from constants import *
 
+
 def normalize(input_file):
     temp_dir = tempfile.mkdtemp()
 
@@ -20,8 +21,8 @@ def normalize(input_file):
     if not args.keep_silence:
         trimmed_file = os.path.join(temp_dir, 'trimmed.flac')
         sox.remove_silence(transcoded_file, trimmed_file,
-            min_duration_sec=args.silence_min_duration_sec,
-            threshold=args.silence_threshold)
+                           min_duration_sec=args.silence_min_duration_sec,
+                           threshold=args.silence_threshold)
     else:
         trimmed_file = transcoded_file
 
@@ -32,6 +33,7 @@ def normalize(input_file):
     sox.normalize(trimmed_file, normalized_file, duration_in_sec=duration)
 
     return normalized_file, temp_dir
+
 
 def load_samples(normalized_file):
     temp_dir = tempfile.mkdtemp()
@@ -55,6 +57,7 @@ def load_samples(normalized_file):
 
     return samples, temp_dir
 
+
 def predict(model_file):
     import keras.models
 
@@ -69,28 +72,49 @@ def predict(model_file):
 
     return scores, languages
 
+
 def clean(paths):
     for path in paths:
         shutil.rmtree(path)
+
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Test the model.')
-    parser.add_argument('input',
+    parser.add_argument(
+        'input',
         help='a path to an audio file')
-    parser.add_argument('--model', dest='model',
+    parser.add_argument(
+        '--model',
+        dest='model',
         help='a path to the H5 model file; the default is `model.h5`')
-    parser.add_argument('--silence-threshold', dest='silence_threshold', type=float,
-        help="indicates what sample value you should treat as silence; the default is `0.5`")
-    parser.add_argument('--silence-min-duration', dest='silence_min_duration_sec', type=float,
-        help="specifies a period of silence that must exist before audio is " +
-             "not copied any more; the default is `0.1`")
-    parser.add_argument('--keep-silence', dest='keep_silence', action='store_true',
+    parser.add_argument(
+        '--silence-threshold',
+        dest='silence_threshold',
+        type=float,
+        help=("indicates what sample value you should treat as silence; "
+              "the default is `0.5`"))
+    parser.add_argument(
+        '--silence-min-duration',
+        dest='silence_min_duration_sec',
+        type=float,
+        help=("specifies a period of silence that must exist before audio is "
+              "not copied any more; the default is `0.1`"))
+    parser.add_argument(
+        '--keep-silence',
+        dest='keep_silence',
+        action='store_true',
         help='don\'t remove silence from samples')
-    parser.add_argument('--keep-temp-files', dest='keep_temp_files', action='store_true',
+    parser.add_argument(
+        '--keep-temp-files',
+        dest='keep_temp_files',
+        action='store_true',
         help='don\'t remove temporary files when done')
-    parser.add_argument('--verbose', dest='verbose', action='store_true',
+    parser.add_argument(
+        '--verbose',
+        dest='verbose',
+        action='store_true',
         help='print more logs')
 
     parser.set_defaults(
@@ -99,8 +123,7 @@ if __name__ == "__main__":
         silence_min_duration_sec=0.1,
         silence_threshold=0.5,
         keep_temp_files=False,
-        verbose=False
-    )
+        verbose=False)
 
     args = parser.parse_args()
 
