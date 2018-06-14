@@ -1,17 +1,11 @@
-# virtual environment
-.env
-
-# dataset
-build
-
 # charts
 *.png
 
 # features
 fb
 
-# sublime
-*.sublime-workspace
+# Compiled python modules.
+*.pyc
 
-# python
-__pycache__
+# Sublime workspace files
+*.sublime-workspace
