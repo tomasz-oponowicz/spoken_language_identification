@@ -31,23 +31,16 @@ def test(labels, features, metadata, model, clazzes, title="test"):
     max_probabilities = np.amax(probabilities, axis=1)
 
     print("Average confidence: {average}\n".format(
-        average=np.mean(max_probabilities)
-    ))
+        average=np.mean(max_probabilities)))
 
     errors = pd.DataFrame(np.zeros((len(clazzes), len(GENDERS)), dtype=int),
                           index=clazzes, columns=GENDERS)
     threshold_errors = pd.DataFrame(
-        np.zeros(
-            (len(clazzes),
-             len(GENDERS)),
-            dtype=int),
+        np.zeros((len(clazzes), len(GENDERS)), dtype=int),
         index=clazzes,
         columns=GENDERS)
     threshold_scores = pd.DataFrame(
-        np.zeros(
-            (len(clazzes),
-             len(GENDERS)),
-            dtype=int),
+        np.zeros((len(clazzes), len(GENDERS)), dtype=int),
         index=clazzes,
         columns=GENDERS)
     for index in range(len(actual)):
@@ -83,9 +76,10 @@ def load_data(label_binarizer, input_dir, group, fold_indexes, input_shape):
         filename = "{group}_data.fold{index}.npy".format(
             group=group, index=fold_index)
         features = np.memmap(
-            os.path.join(
-                input_dir, filename), dtype=DATA_TYPE, mode='r', shape=(
-                len(metadata),) + input_shape)
+            os.path.join(input_dir, filename),
+            dtype=DATA_TYPE,
+            mode='r',
+            shape=(len(metadata),) + input_shape)
 
         all_metadata.append(metadata)
         all_features.append(features)
@@ -95,8 +89,7 @@ def load_data(label_binarizer, input_dir, group, fold_indexes, input_shape):
     all_labels = label_binarizer.transform(all_metadata[:, 0])
 
     print("[{group}] labels: {labels}, features: {features}".format(
-        group=group, labels=all_labels.shape, features=all_features.shape
-    ))
+        group=group, labels=all_labels.shape, features=all_features.shape))
 
     return all_labels, all_features, all_metadata
 
@@ -124,8 +117,7 @@ def train_generator(fold_count, input_dir, input_shape, max_iterations=1):
             input_dir,
             'train',
             train_fold_indexes,
-            input_shape
-        )
+            input_shape)
 
         test_fold_indexes = [fold_index]
         test_labels, test_features, test_metadata = load_data(
@@ -133,8 +125,7 @@ def train_generator(fold_count, input_dir, input_shape, max_iterations=1):
             input_dir,
             'train',
             test_fold_indexes,
-            input_shape
-        )
+            input_shape)
 
         yield (train_labels, train_features, test_labels,
                test_features, test_metadata, clazzes)

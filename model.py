@@ -1,4 +1,3 @@
-
 from constants import *
 
 import time
@@ -227,7 +226,6 @@ if __name__ == "__main__":
         accuracies = np.array(accuracies)
 
         print('\n## Summary\n')
-        print(
-            "Mean: {mean}, Std {std}".format(
-                mean=accuracies.mean(),
-                std=accuracies.std()))
+        print("Mean: {mean}, Std {std}".format(
+            mean=accuracies.mean(),
+            std=accuracies.std()))

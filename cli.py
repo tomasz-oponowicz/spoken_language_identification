@@ -20,9 +20,11 @@ def normalize(input_file):
 
     if not args.keep_silence:
         trimmed_file = os.path.join(temp_dir, 'trimmed.flac')
-        sox.remove_silence(transcoded_file, trimmed_file,
-                           min_duration_sec=args.silence_min_duration_sec,
-                           threshold=args.silence_threshold)
+        sox.remove_silence(
+            transcoded_file,
+            trimmed_file,
+            min_duration_sec=args.silence_min_duration_sec,
+            threshold=args.silence_threshold)
     else:
         trimmed_file = transcoded_file
 
@@ -150,5 +152,4 @@ if __name__ == "__main__":
         print("{language}: {percent:.2f}% ({amount:.0f})".format(
             language=language,
             percent=(score / total) * 100,
-            amount=score
-        ))
+            amount=score))

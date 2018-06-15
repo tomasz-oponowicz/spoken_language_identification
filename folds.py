@@ -40,7 +40,8 @@ def generate_fold(
     fold_files = []
     for fold_uid in fold_uids:
         filename = '*{uid}*{extension}'.format(
-            uid=fold_uid, extension=input_ext)
+            uid=fold_uid,
+            extension=input_ext)
         fold_files.extend(glob(os.path.join(input_dir, filename)))
 
     fold_files = sorted(fold_files)
@@ -53,9 +54,9 @@ def generate_fold(
         group=group, index=fold_index)
     features = np.memmap(
         os.path.join(output_dir, filename),
-        dtype=DATA_TYPE, mode='w+',
-        shape=(len(fold_files),) + output_shape
-    )
+        dtype=DATA_TYPE,
+        mode='w+',
+        shape=(len(fold_files),) + output_shape)
 
     # append data to a file array
     # append metadata to an array
@@ -77,11 +78,11 @@ def generate_fold(
 
     # store metadata in a file
     filename = "{group}_metadata.fold{index}.npy".format(
-        group=group, index=fold_index)
+        group=group,
+        index=fold_index)
     np.save(
         os.path.join(output_dir, filename),
-        metadata
-    )
+        metadata)
 
     # flush changes to a disk
     features.flush()
@@ -108,10 +109,15 @@ def generate_folds(
         print("[{group}] Fold {index}".format(group=group, index=fold_index))
 
         generate_fold(
-            uids, input_dir, input_ext,
-            output_dir, group, fold_index,
-            input_shape, normalize, output_shape
-        )
+            uids,
+            input_dir,
+            input_ext,
+            output_dir,
+            group,
+            fold_index,
+            input_shape,
+            normalize,
+            output_shape)
 
         fold_index += 1
 
@@ -120,11 +126,14 @@ def normalize_fb(spectrogram):
 
     # Mean and Variance Normalization
     spectrogram = speechpy.processing.cmvn(
-        spectrogram, variance_normalization=True)
+        spectrogram,
+        variance_normalization=True)
 
     # MinMax Scaler, scale values between (0,1)
-    normalized = (spectrogram - np.min(spectrogram)) / \
+    normalized = (
+        (spectrogram - np.min(spectrogram)) /
         (np.max(spectrogram) - np.min(spectrogram))
+    )
 
     # Rotate 90deg
     normalized = np.swapaxes(normalized, 0, 1)
@@ -145,15 +154,19 @@ if __name__ == "__main__":
 
     # fb
     generate_folds(
-        './build/test', '.fb.npz',
-        output_dir='fb', group='test',
+        './build/test',
+        '.fb.npz',
+        output_dir='fb',
+        group='test',
         input_shape=(WIDTH, FB_HEIGHT),
         normalize=normalize_fb,
         output_shape=(FB_HEIGHT, WIDTH, COLOR_DEPTH)
     )
     generate_folds(
-        './build/train', '.fb.npz',
-        output_dir='fb', group='train',
+        './build/train',
+        '.fb.npz',
+        output_dir='fb',
+        group='train',
         input_shape=(WIDTH, FB_HEIGHT),
         normalize=normalize_fb,
         output_shape=(FB_HEIGHT, WIDTH, COLOR_DEPTH)

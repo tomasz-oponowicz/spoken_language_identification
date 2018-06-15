@@ -16,7 +16,8 @@ def generate_fb_and_mfcc(signal, sample_rate):
     # Pre-Emphasis
     pre_emphasis = 0.97
     emphasized_signal = np.append(
-        signal[0], signal[1:] - pre_emphasis * signal[:-1])
+        signal[0],
+        signal[1:] - pre_emphasis * signal[:-1])
 
     # Framing
     frame_size = 0.025
@@ -25,8 +26,7 @@ def generate_fb_and_mfcc(signal, sample_rate):
     # Convert from seconds to samples
     frame_length, frame_step = (
         frame_size * sample_rate,
-        frame_stride * sample_rate
-    )
+        frame_stride * sample_rate)
     signal_length = len(emphasized_signal)
     frame_length = int(round(frame_length))
     frame_step = int(round(frame_step))
@@ -106,7 +106,11 @@ def generate_fb_and_mfcc(signal, sample_rate):
 
     # ### Keep 2-13
     # mfcc = dct(
-    #     filter_banks, type=2, axis=1, norm='ortho')[:, 1 : (num_ceps + 1)]
+    #     filter_banks,
+    #     type=2,
+    #     axis=1,
+    #     norm='ortho'
+    # )[:, 1 : (num_ceps + 1)]
 
     # (nframes, ncoeff) = mfcc.shape
     # n = np.arange(ncoeff)
