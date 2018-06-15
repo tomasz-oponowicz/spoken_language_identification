@@ -1,5 +1,7 @@
 # spoken language identification
 
+[![Build Status](https://travis-ci.org/tomasz-oponowicz/spoken_language_identification.svg?branch=master)](https://travis-ci.org/tomasz-oponowicz/spoken_language_identification)
+
 Analyze audio to identify a language.
 The solution uses the CNN network in order to detect language specific phonems.
 It supports 3 languages: English, German and Spanish.
