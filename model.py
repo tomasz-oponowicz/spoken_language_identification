@@ -162,13 +162,13 @@ if __name__ == "__main__":
         label_binarizer, clazzes = common.build_label_binarizer()
 
         test_labels, test_features, test_metadata = common.load_data(
-            label_binarizer, 'fb', 'test', [1], input_shape)
+            label_binarizer, 'build/folds', 'test', [1], input_shape)
 
         common.test(test_labels, test_features, test_metadata, model, clazzes)
     else:
         accuracies = []
         generator = common.train_generator(
-            14, 'fb', input_shape, max_iterations=1)
+            14, 'build/folds', input_shape, max_iterations=1)
 
         first = True
         for (train_labels,

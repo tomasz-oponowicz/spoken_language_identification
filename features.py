@@ -172,7 +172,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.debug:
-        process_audio('build/train', debug=True)
+        process_audio(os.path.join(common.DATASET_DIST, 'train'), debug=True)
     else:
-        process_audio('build/test')
-        process_audio('build/train')
+        process_audio(os.path.join(common.DATASET_DIST, 'test'))
+        process_audio(os.path.join(common.DATASET_DIST, 'train'))

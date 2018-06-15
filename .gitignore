@@ -1,8 +1,8 @@
+# output
+build
+
 # charts
 *.png
-
-# features
-fb
 
 # Compiled python modules.
 *.pyc

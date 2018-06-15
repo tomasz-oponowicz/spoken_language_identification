@@ -3,7 +3,7 @@
 	[
 		{
 			"path": ".",
-			"folder_exclude_patterns": ["fb"],
+			"folder_exclude_patterns": ["build"],
 			"file_exclude_patterns": ["*.mp3"]
 		}
 	]
