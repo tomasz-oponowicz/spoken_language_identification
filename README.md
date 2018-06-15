@@ -18,24 +18,24 @@ The score against the test set (out-of-sample) is 97% (F1 metric). Additionally 
 
 1. Create a temporary directory and change the current directory:
 
-        $ mkdir examples && cd $_
+       $ mkdir examples && cd $_
 1. Download samples:
     > NOTE: An audio file should contain speech and silence only. For example podcasts, interviews or audiobooks are a good fit. Sound effects or languages other than English, German or Spanish may be badly classified.
     * English (confidence 88.45%):
 
-            $ wget "https://s102.podbean.com/pb/e19e826a5c0e755683b154195e22127a/5afe956e/data1/fs145/862611/uploads/039_jsAir_-_Node_js_and_Community.mp3" -O en.mp3
+          $ wget "https://s102.podbean.com/pb/e19e826a5c0e755683b154195e22127a/5afe956e/data1/fs145/862611/uploads/039_jsAir_-_Node_js_and_Community.mp3" -O en.mp3
     * German (confidence 85.53%):
 
-            $ wget "http://mp3-download.ard.de/radio/radiofeature/auf-die-fresse-xa9c.l.mp3" -O de.mp3
+          $ wget "http://mp3-download.ard.de/radio/radiofeature/auf-die-fresse-xa9c.l.mp3" -O de.mp3
     * Spanish (confidence 86.96%):
 
-            $ wget "http://mvod.lvlt.rtve.es/resources/TE_SCINCOC/mp3/2/8/1526585716282.mp3" -O es.mp3
+          $ wget "http://mvod.lvlt.rtve.es/resources/TE_SCINCOC/mp3/2/8/1526585716282.mp3" -O es.mp3
 1. Build the docker image:
 
-        $ docker build -t sli --rm https://github.com/tomasz-oponowicz/spoken_language_identification.git
+       $ docker build -t sli --rm https://github.com/tomasz-oponowicz/spoken_language_identification.git
 1. Mount the `examples` directory and classify an audio file, for example:
 
-        $ docker run --rm -it -v $(pwd):/data sli /data/en.mp3
+       $ docker run --rm -it -v $(pwd):/data sli /data/en.mp3
 
 ## Train
 
@@ -49,38 +49,37 @@ The score against the test set (out-of-sample) is 97% (F1 metric). Additionally 
 
 1. Clone the repository:
 
-		$ git clone git@github.com:tomasz-oponowicz/spoken_language_identification.git
+       $ git clone git@github.com:tomasz-oponowicz/spoken_language_identification.git
 1. Go to the newly created directory:
 
-		$ cd spoken_language_identification
+       $ cd spoken_language_identification
 1. Generate samples:
-  1. Fetch the *spoken_language_dataset* dataset:
+    1. Fetch the *spoken_language_dataset* dataset:
+    
+           $ git submodule update --init --recursive
+    1. Go to the dataset directory:
 
-            $ git submodule update --init --recursive
-	1. Go to the dataset directory:
+           $ cd spoken_language_dataset
+    1. Generate samples:
 
-	    	$ cd spoken_language_dataset
-	1. Generate samples:
+           $ make build
+    1. Fix file permission of newly generated samples:
+    
+           $ make fix_permissions
+    1. Return to the `spoken_language_identification` directory
 
-			$ make build
-	1. Fix file permission of newly generated samples:
-
-			$ make fix_permissions
-	1. Return to the `spoken_language_identification` directory
-
-			$ cd ..
+           $ cd ..
 1. Install dependencies
 
-		$ pip install -r requirements.txt
-	...the `tensorflow` package is installed by default (i.e. CPU support only). In order to speed up the training, install the `tensorflow-gpu` package instead (i.e. GPU support). 
-	More information at [*Installing TensorFlow*](https://www.tensorflow.org/install/install_linux).
+       $ pip install -r requirements.txt
+    ...the `tensorflow` package is installed by default (i.e. CPU support only). In order to speed up the training, install the `tensorflow-gpu` package instead (i.e. GPU support). More information at [*Installing TensorFlow*](https://www.tensorflow.org/install/install_linux).
 1. Generate features from samples:
 
-		$ python features.py
+       $ python features.py
 1. Normalize features and build folds:
 
-		$ python folds.py
+       $ python folds.py
 1. Train the model:
-
-		$ python model.py
-	...new model is stored at `model.h5`.
+       
+       $ python model.py
+    ...new model is stored at `model.h5`.
