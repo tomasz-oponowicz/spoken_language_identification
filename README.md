@@ -23,9 +23,9 @@ The score against the test set (out-of-sample) is 97% (F1 metric). Additionally 
        $ mkdir examples && cd $_
 1. Download samples:
     > NOTE: An audio file should contain speech and silence only. For example podcasts, interviews or audiobooks are a good fit. Sound effects or languages other than English, German or Spanish may be badly classified.
-    * English (confidence 88.45%):
+    * English (confidence 85.36%):
 
-          $ wget "https://s102.podbean.com/pb/e19e826a5c0e755683b154195e22127a/5afe956e/data1/fs145/862611/uploads/039_jsAir_-_Node_js_and_Community.mp3" -O en.mp3
+          $ wget "https://javascriptair.podbean.com/mf/player-preload/nkdkps/048_JavaScript_Air_-_JavaScript_and_the_Web_Platform_The_Grand_Finale_.mp3" -O en.mp3
     * German (confidence 85.53%):
 
           $ wget "http://mp3-download.ard.de/radio/radiofeature/auf-die-fresse-xa9c.l.mp3" -O de.mp3
