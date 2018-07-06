@@ -2,13 +2,51 @@
 
 [![Build Status](https://travis-ci.org/tomasz-oponowicz/spoken_language_identification.svg?branch=master)](https://travis-ci.org/tomasz-oponowicz/spoken_language_identification)
 
-Analyze audio to identify a language.
-The solution uses the CNN network in order to detect language specific phonems.
+Identify a language of audio using artificial intelligence.
+
+The inspiration for the project came from the TopCoder contest, [Spoken Languages 2][tc].
+The solution uses [the convolutional neural network][cnn] in order to detect language specific phonemes.
 It supports 3 languages: English, German and Spanish.
+
+Take a look at the [Demo](#demo) section to try the project yourself against real life content.
+
+## Dataset
+
+New dataset was created from scratch.
+
+[LibriVox recordings][lv] were used to prepare the dataset. 
+Particular attention was paid to a big variety of unique speakers.
+Big variance forces the network to concentrate more on language properties than a specific voice. 
+Samples are equally balanced between languages, genders and speakers in order not to favour any subgroup.
+Finally speakers present in the test set, are not present in the train set.
+This helps estimate a generalization error.
+
+More information at [tomasz-oponowicz/spoken_language_dataset][sld].
+
+## Architecture
+
+The first step is to normalize input audio. Each sample is an FLAC audio file with:
+
+* sample rate: 22050
+* bit depth: 16
+* channels: 1
+* duration: 10 seconds (sharp)
+
+Next [filter banks][src_fb] are extracted from samples. 
+[Mean and variance normalization][src_mvn] is applied.
+Then data is scaled with [the Min/Max scaler][src_mms].
+
+Finally preprocessed data is passed to [the convolutional neural network][src_cnn].
+Please notice [the *AveragePooling2D* layer][src_apl] which improved the performance.
+This strategy is called global average pooling.
+It effectively forces the previous layers to produce the feature maps.
+
+The output is multiclass.
 
 ## Performance
 
-The score against the test set (out-of-sample) is 97% (F1 metric). Additionally the network generalizes well and presents high score against real life content, for example podcasts or TV news.
+The score against the test set (out-of-sample) is 97% (F1 metric). 
+Additionally the network generalizes well and presents high score against real life content, for example podcasts or TV news.
 
 ## Demo
 
@@ -85,3 +123,17 @@ The score against the test set (out-of-sample) is 97% (F1 metric). Additionally 
        
        $ python model.py
     ...new model is stored at `model.h5`.
+
+## Release history
+
+* 2018-07-06 / v1.0 / Initial version
+
+[tc]: https://community.topcoder.com/longcontest/?module=ViewProblemStatement&rd=16555&pm=13978
+[cnn]: https://en.wikipedia.org/wiki/Convolutional_neural_network
+[sld]: https://github.com/tomasz-oponowicz/spoken_language_dataset
+[lv]: https://librivox.org
+[src_fb]: https://github.com/tomasz-oponowicz/spoken_language_identification/blob/8f886bc2ca54f22b693d46264fb19aadfb30dc97/features.py#L14
+[src_mvn]: https://github.com/tomasz-oponowicz/spoken_language_identification/blob/8f886bc2ca54f22b693d46264fb19aadfb30dc97/folds.py#L128
+[src_mms]: https://github.com/tomasz-oponowicz/spoken_language_identification/blob/8f886bc2ca54f22b693d46264fb19aadfb30dc97/folds.py#L133
+[src_cnn]: https://github.com/tomasz-oponowicz/spoken_language_identification/blob/master/model.py#L61-L131
+[src_apl]: https://github.com/tomasz-oponowicz/spoken_language_identification/blob/master/model.py#L114
