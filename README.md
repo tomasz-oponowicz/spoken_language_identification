@@ -2,11 +2,10 @@
 
 [![Build Status](https://travis-ci.org/tomasz-oponowicz/spoken_language_identification.svg?branch=master)](https://travis-ci.org/tomasz-oponowicz/spoken_language_identification)
 
-Identify a language of audio using artificial intelligence.
-
-The inspiration for the project came from the TopCoder contest, [Spoken Languages 2][tc].
+Identify a spoken language using artificial intelligence (LID).
 The solution uses [the convolutional neural network][cnn] in order to detect language specific phonemes.
 It supports 3 languages: English, German and Spanish.
+The inspiration for the project came from the TopCoder contest, [Spoken Languages 2][tc].
 
 Take a look at the [Demo](#demo) section to try the project yourself against real life content.
 
@@ -39,7 +38,7 @@ Then data is scaled with [the Min/Max scaler][src_mms].
 Finally preprocessed data is passed to [the convolutional neural network][src_cnn].
 Please notice [the *AveragePooling2D* layer][src_apl] which improved the performance.
 This strategy is called global average pooling.
-It effectively forces the previous layers to produce the feature maps.
+It effectively forces the previous layers to produce the confidence maps.
 
 The output is multiclass.
 
@@ -47,6 +46,9 @@ The output is multiclass.
 
 The score against the test set (out-of-sample) is 97% (F1 metric). 
 Additionally the network generalizes well and presents high score against real life content, for example podcasts or TV news.
+
+Sound effects or languages other than English, German or Spanish may be badly classified.
+If you want to work with noisy audio consider filtering noise out beforehand.
 
 ## Demo
 
