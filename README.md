@@ -72,6 +72,8 @@ If you want to work with noisy audio consider filtering noise out beforehand.
     * Spanish (confidence 86.96%):
 
           $ wget "http://mvod.lvlt.rtve.es/resources/TE_SCINCOC/mp3/2/8/1526585716282.mp3" -O es.mp3
+	  
+    ...other examples of real life content are listed in the [EXAMPLES.md](./EXAMPLES.md).
 1. Build the docker image:
 
        $ docker build -t sli --rm https://github.com/tomasz-oponowicz/spoken_language_identification.git
