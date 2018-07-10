@@ -79,6 +79,11 @@ If you want to work with noisy audio consider filtering noise out beforehand.
 
        $ docker run --rm -it -v $(pwd):/data sli /data/en.mp3
 
+	...there are several [options available through command line][src_opt].
+	For example you can tweak the noise reducer by increasing or decreasing the `silence-threshold` (`0.5` by default):
+
+       $ docker run --rm -it -v $(pwd):/data sli --silence-threshold=1 /data/es.mp3
+
 ## Train
 
 ### Prerequisites
@@ -103,6 +108,7 @@ If you want to work with noisy audio consider filtering noise out beforehand.
 
            $ cd spoken_language_dataset
     1. Generate samples:
+		> NOTE: Alternatively you can [download the pregenerated dataset][kg]. Depending on your hardware it can save you 1-2 hours. After downloading, extract contents into `build/train` and `build/test` directories.
 
            $ make build
     1. Fix file permission of newly generated samples:
@@ -139,3 +145,5 @@ If you want to work with noisy audio consider filtering noise out beforehand.
 [src_mms]: https://github.com/tomasz-oponowicz/spoken_language_identification/blob/8f886bc2ca54f22b693d46264fb19aadfb30dc97/folds.py#L133
 [src_cnn]: https://github.com/tomasz-oponowicz/spoken_language_identification/blob/master/model.py#L61-L131
 [src_apl]: https://github.com/tomasz-oponowicz/spoken_language_identification/blob/master/model.py#L114
+[kg]: https://www.kaggle.com/toponowicz/spoken-language-identification
+[src_opt]: https://github.com/tomasz-oponowicz/spoken_language_identification/blob/master/cli.py#L86
